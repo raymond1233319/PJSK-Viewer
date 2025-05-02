@@ -1,6 +1,6 @@
 # PJSK Viewer
 
-[![Latest Release](https://img.shields.io/github/v/release/raymond1233319/PJSKviewer)](https://github.com/raymond1233319/PJSKviewer/releases/latest)
+[![Latest Release](https://img.shields.io/github/v/release/raymond1233319/PJSK-Viewer)](https://github.com/raymond1233319/PJSK-Viewer/releases/latest)
 [![Flutter Version](https://img.shields.io/badge/Flutter-3.x-blue)](https://flutter.dev)
 
 A Flutter application designed to view information related to the mobile game *Project SEKAI COLORFUL STAGE! feat. Hatsune Miku*. Browse cards, events, gachas, music, and more.
