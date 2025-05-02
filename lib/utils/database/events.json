@@ -1,0 +1,986 @@
+[
+  {
+    "id": 1,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[1,2,3,4,42]",
+    "unit": "light_sound"
+  },
+  {
+    "id": 2,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[17,18,19,20,31]",
+    "unit": "school_refusal"
+  },
+  {
+    "id": 3,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[13,14,15,16,55]",
+    "unit": "theme_park"
+  },
+  {
+    "id": 4,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[2,6,14,18,30]",
+    "unit": "none"
+  },
+  {
+    "id": 5,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[5,6,7,8,33]",
+    "unit": "idol"
+  },
+  {
+    "id": 6,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[9,10,11,12,49]",
+    "unit": "street"
+  },
+  {
+    "id": 7,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[12,13,15,20,55]",
+    "unit": "none"
+  },
+  {
+    "id": 8,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[14,15,16,30,50]",
+    "unit": "none"
+  },
+  {
+    "id": 9,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[2,19,29,39,42]",
+    "unit": "none"
+  },
+  {
+    "id": 10,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[1,2,3,4,47]",
+    "unit": "light_sound"
+  },
+  {
+    "id": 11,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[5,6,7,8,43]",
+    "unit": "idol"
+  },
+  {
+    "id": 12,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[9,10,11,12,39]",
+    "unit": "street"
+  },
+  {
+    "id": 13,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[3,4,13,16,35]",
+    "unit": "none"
+  },
+  {
+    "id": 14,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[17,18,19,20,36]",
+    "unit": "school_refusal"
+  },
+  {
+    "id": 15,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[13,14,15,16,40]",
+    "unit": "theme_park"
+  },
+  {
+    "id": 16,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[2,3,12,13,45]",
+    "unit": "none"
+  },
+  {
+    "id": 17,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[5,6,7,8,43]",
+    "unit": "idol"
+  },
+  {
+    "id": 18,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[1,5,9,17,27]",
+    "unit": "none"
+  },
+  {
+    "id": 19,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[17,18,19,20,51]",
+    "unit": "school_refusal"
+  },
+  {
+    "id": 20,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[1,2,3,4,47]",
+    "unit": "light_sound"
+  },
+  {
+    "id": 21,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[9,10,11,12,54]",
+    "unit": "street"
+  },
+  {
+    "id": 22,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[7,16,19,20,43]",
+    "unit": "none"
+  },
+  {
+    "id": 23,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[5,6,7,8,48]",
+    "unit": "idol"
+  },
+  {
+    "id": 24,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[10,11,12,16,40]",
+    "unit": "none"
+  },
+  {
+    "id": 25,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[13,14,15,35,55]",
+    "unit": "none"
+  },
+  {
+    "id": 26,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[17,18,19,20,46]",
+    "unit": "school_refusal"
+  },
+  {
+    "id": 27,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[1,2,3,4,32]",
+    "unit": "light_sound"
+  },
+  {
+    "id": 28,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[9,10,12,34,49]",
+    "unit": "none"
+  },
+  {
+    "id": 29,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[7,11,19,20,39]",
+    "unit": "none"
+  },
+  {
+    "id": 30,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[2,3,9,14,30]",
+    "unit": "none"
+  },
+  {
+    "id": 31,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[5,6,7,8,38]",
+    "unit": "idol"
+  },
+  {
+    "id": 32,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[14,15,16,45,55]",
+    "unit": "none"
+  },
+  {
+    "id": 33,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[4,8,18,27,48]",
+    "unit": "none"
+  },
+  {
+    "id": 34,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[1,2,3,4,52]",
+    "unit": "light_sound"
+  },
+  {
+    "id": 35,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[17,18,19,20,36]",
+    "unit": "school_refusal"
+  },
+  {
+    "id": 36,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[1,5,9,13,17,21]",
+    "unit": "none"
+  },
+  {
+    "id": 37,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[9,10,11,12,29,34,39,49,54]",
+    "unit": "street"
+  },
+  {
+    "id": 38,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[13,14,15,16,30,35,40,45,50,55]",
+    "unit": "theme_park"
+  },
+  {
+    "id": 39,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[17,18,19,20,31,36,46,51]",
+    "unit": "school_refusal"
+  },
+  {
+    "id": 40,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[1,2,3,4,27,32,37,42,47,52]",
+    "unit": "light_sound"
+  },
+  {
+    "id": 41,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[6,8,9,10,43]",
+    "unit": "none"
+  },
+  {
+    "id": 42,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[1,3,17,18,31]",
+    "unit": "none"
+  },
+  {
+    "id": 43,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[5,6,7,8,28,33,38,43,48,53]",
+    "unit": "idol"
+  },
+  {
+    "id": 44,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[9,10,11,12,29,34,39,44,49,54]",
+    "unit": "street"
+  },
+  {
+    "id": 45,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[3,4,6,9,28]",
+    "unit": "none"
+  },
+  {
+    "id": 46,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[13,14,15,16,30,35,40,45,50,55]",
+    "unit": "theme_park"
+  },
+  {
+    "id": 47,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[17,18,19,20,31,36,46,51]",
+    "unit": "school_refusal"
+  },
+  {
+    "id": 48,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[2,7,8,14,33]",
+    "unit": "none"
+  },
+  {
+    "id": 49,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[9,10,11,12,29,34,39,44,49,54]",
+    "unit": "street"
+  },
+  {
+    "id": 50,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[1,2,3,4,27,32,37,42,47,52]",
+    "unit": "light_sound"
+  },
+  {
+    "id": 51,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[4,11,13,20,40]",
+    "unit": "none"
+  },
+  {
+    "id": 52,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[5,6,7,8,28,33,38,43,48,53]",
+    "unit": "idol"
+  },
+  {
+    "id": 53,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[17,18,19,20,31,36,46,51]",
+    "unit": "school_refusal"
+  },
+  {
+    "id": 54,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[31,33,39,42,49,55]",
+    "unit": "none"
+  },
+  {
+    "id": 55,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[13,14,15,16,30,35,40,45,50,55]",
+    "unit": "theme_park"
+  },
+  {
+    "id": 56,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[1,2,3,4,27,32,37,42,47,52]",
+    "unit": "light_sound"
+  },
+  {
+    "id": 57,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[5,6,7,8,28,33,38,43,48,53]",
+    "unit": "idol"
+  },
+  {
+    "id": 58,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[11,16,19,20,45]",
+    "unit": "none"
+  },
+  {
+    "id": 59,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[9,10,11,12,29,34,39,44,49,54]",
+    "unit": "street"
+  },
+  {
+    "id": 60,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[7,8,9,10,49]",
+    "unit": "none"
+  },
+  {
+    "id": 61,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[17,18,19,20,31,36,41,46,51]",
+    "unit": "school_refusal"
+  },
+  {
+    "id": 62,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[13,14,15,16,30,35,40,45,50,55]",
+    "unit": "theme_park"
+  },
+  {
+    "id": 63,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[1,5,17,19,46]",
+    "unit": "none"
+  },
+  {
+    "id": 64,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[9,10,11,12,29,34,39,44,49,54]",
+    "unit": "street"
+  },
+  {
+    "id": 65,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[1,2,3,4,27,32,37,42,47,52]",
+    "unit": "light_sound"
+  },
+  {
+    "id": 66,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[11,12,14,15,30]",
+    "unit": "none"
+  },
+  {
+    "id": 67,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[5,6,7,8,28,33,38,43,48,53]",
+    "unit": "idol"
+  },
+  {
+    "id": 68,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[17,18,19,20,31,36,41,46,51]",
+    "unit": "school_refusal"
+  },
+  {
+    "id": 69,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[1,2,3,4,27,32,37,42,47,52]",
+    "unit": "light_sound"
+  },
+  {
+    "id": 70,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[3,14,17,19,37]",
+    "unit": "none"
+  },
+  {
+    "id": 71,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[9,10,11,12,29,34,39,44,49,54]",
+    "unit": "street"
+  },
+  {
+    "id": 72,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[3,8,11,16,18]",
+    "unit": "none"
+  },
+  {
+    "id": 73,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[5,6,7,8,28,33,38,43,48,53]",
+    "unit": "idol"
+  },
+  {
+    "id": 74,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[13,14,15,16,30,35,40,45,50,55]",
+    "unit": "theme_park"
+  },
+  {
+    "id": 75,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[4,5,6,9,34]",
+    "unit": "none"
+  },
+  {
+    "id": 76,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[1,2,3,4,27,32,37,42,47,52]",
+    "unit": "light_sound"
+  },
+  {
+    "id": 77,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[17,18,19,20,31,36,41,46,51]",
+    "unit": "school_refusal"
+  },
+  {
+    "id": 78,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[5,6,7,8,28,33,38,43,48,53]",
+    "unit": "idol"
+  },
+  {
+    "id": 79,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[9,10,11,12,29,34,39,44,49,54]",
+    "unit": "street"
+  },
+  {
+    "id": 80,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[4,7,8,18,53]",
+    "unit": "none"
+  },
+  {
+    "id": 81,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[10,11,13,15,35]",
+    "unit": "none"
+  },
+  {
+    "id": 82,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[13,14,15,16,30,35,40,45,50,55]",
+    "unit": "theme_park"
+  },
+  {
+    "id": 83,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[1,2,3,4,27,32,37,42,47,52]",
+    "unit": "light_sound"
+  },
+  {
+    "id": 84,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[1,3,15,17,41]",
+    "unit": "none"
+  },
+  {
+    "id": 85,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[5,6,7,8,28,33,38,43,48,53]",
+    "unit": "idol"
+  },
+  {
+    "id": 86,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[9,10,11,12,29,34,39,44,49,54]",
+    "unit": "street"
+  },
+  {
+    "id": 87,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[2,12,16,29,54]",
+    "unit": "none"
+  },
+  {
+    "id": 88,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[13,14,15,16,30,35,40,45,50,55]",
+    "unit": "theme_park"
+  },
+  {
+    "id": 89,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[17,18,19,20,31,36,41,46,51,56]",
+    "unit": "school_refusal"
+  },
+  {
+    "id": 90,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[4,10,15,19,27]",
+    "unit": "none"
+  },
+  {
+    "id": 91,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[1,2,3,4,27,32,37,42,47,52]",
+    "unit": "light_sound"
+  },
+  {
+    "id": 92,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[5,6,7,8,28,33,38,43,48,53]",
+    "unit": "idol"
+  },
+  {
+    "id": 93,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[17,18,19,20,31,36,41,46,51,56]",
+    "unit": "school_refusal"
+  },
+  {
+    "id": 94,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[1,2,6,15,28]",
+    "unit": "none"
+  },
+  {
+    "id": 95,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[13,14,15,16,30,35,40,45,50,55]",
+    "unit": "theme_park"
+  },
+  {
+    "id": 96,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[3,14,17,20,32]",
+    "unit": "none"
+  },
+  {
+    "id": 97,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[9,10,11,12,29,34,39,44,49,54]",
+    "unit": "street"
+  },
+  {
+    "id": 98,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[5,6,7,8,28,33,38,43,48,53]",
+    "unit": "idol"
+  },
+  {
+    "id": 99,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[7,8,13,16,18]",
+    "unit": "none"
+  },
+  {
+    "id": 100,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[17,18,19,20,31,36,41,46,51,56]",
+    "unit": "school_refusal"
+  },
+  {
+    "id": 101,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[1,2,3,4,27,32,37,42,47,52]",
+    "unit": "light_sound"
+  },
+  {
+    "id": 102,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[2,5,7,14,20]",
+    "unit": "none"
+  },
+  {
+    "id": 103,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[9,10,11,12,29,34,39,44,49,54]",
+    "unit": "street"
+  },
+  {
+    "id": 104,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[13,14,15,16,30,35,40,45,50,55]",
+    "unit": "theme_park"
+  },
+  {
+    "id": 105,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[30,36,37,43,51,54]",
+    "unit": "none"
+  },
+  {
+    "id": 106,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[2,4,6,7,14]",
+    "unit": "none"
+  },
+  {
+    "id": 107,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[10,11,13,16,20]",
+    "unit": "none"
+  },
+  {
+    "id": 108,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[1,5,9,13,17]",
+    "unit": "none"
+  },
+  {
+    "id": 109,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[9,10,11,12,29,34,39,44,49,54]",
+    "unit": "street"
+  },
+  {
+    "id": 110,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[1,2,3,4,27,32,37,42,47,52]",
+    "unit": "light_sound"
+  },
+  {
+    "id": 111,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[5,6,7,8,28,33,38,43,48,53]",
+    "unit": "idol"
+  },
+  {
+    "id": 112,
+    "bonusAttr": "none",
+    "bonusCharacter": "[17,18,19,20]",
+    "unit": "school_refusal"
+  },
+  {
+    "id": 113,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[13,14,15,16,30,35,40,45,50,55]",
+    "unit": "theme_park"
+  },
+  {
+    "id": 114,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[10,11,12,15,40]",
+    "unit": "none"
+  },
+  {
+    "id": 115,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[1,4,5,6,43]",
+    "unit": "none"
+  },
+  {
+    "id": 116,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[17,18,19,20,31,36,41,46,51,56]",
+    "unit": "school_refusal"
+  },
+  {
+    "id": 117,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[2,4,18,20,47]",
+    "unit": "none"
+  },
+  {
+    "id": 118,
+    "bonusAttr": "none",
+    "bonusCharacter": "[9,10,11,12]",
+    "unit": "street"
+  },
+  {
+    "id": 119,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[13,14,15,16,30,35,40,45,50,55]",
+    "unit": "theme_park"
+  },
+  {
+    "id": 120,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[6,9,12,19,44]",
+    "unit": "none"
+  },
+  {
+    "id": 121,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[1,2,3,4,27,32,37,42,47,52]",
+    "unit": "light_sound"
+  },
+  {
+    "id": 122,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[5,6,7,8,28,33,38,43,48,53]",
+    "unit": "idol"
+  },
+  {
+    "id": 123,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[1,5,7,17,18]",
+    "unit": "none"
+  },
+  {
+    "id": 124,
+    "bonusAttr": "none",
+    "bonusCharacter": "[13,14,15,16]",
+    "unit": "theme_park"
+  },
+  {
+    "id": 125,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[9,10,11,12,29,34,39,44,49,54]",
+    "unit": "street"
+  },
+  {
+    "id": 126,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[3,5,11,16,52]",
+    "unit": "none"
+  },
+  {
+    "id": 127,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[17,18,19,20,31,36,41,46,51,56]",
+    "unit": "school_refusal"
+  },
+  {
+    "id": 128,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[1,2,3,4,27,32,37,42,47,52]",
+    "unit": "light_sound"
+  },
+  {
+    "id": 129,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[9,10,11,12,29,34,39,44,49,54]",
+    "unit": "street"
+  },
+  {
+    "id": 130,
+    "bonusAttr": "none",
+    "bonusCharacter": "[5,6,7,8]",
+    "unit": "idol"
+  },
+  {
+    "id": 131,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[13,14,15,16,30,35,40,45,50,55]",
+    "unit": "theme_park"
+  },
+  {
+    "id": 132,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[4,5,15,19,45]",
+    "unit": "none"
+  },
+  {
+    "id": 133,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[5,6,7,8,28,33,38,43,48,53]",
+    "unit": "idol"
+  },
+  {
+    "id": 134,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[17,18,19,20,31,36,41,46,51,56]",
+    "unit": "school_refusal"
+  },
+  {
+    "id": 135,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[9,10,11,12,29,34,39,44,49,54]",
+    "unit": "street"
+  },
+  {
+    "id": 136,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[13,14,15,16,30,35,40,45,50,55]",
+    "unit": "theme_park"
+  },
+  {
+    "id": 137,
+    "bonusAttr": "none",
+    "bonusCharacter": "[1,2,3,4]",
+    "unit": "light_sound"
+  },
+  {
+    "id": 138,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[5,6,7,8,28,33,38,43,48,53]",
+    "unit": "idol"
+  },
+  {
+    "id": 139,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[2,10,12,17,18]",
+    "unit": "none"
+  },
+  {
+    "id": 140,
+    "bonusAttr": "none",
+    "bonusCharacter": "[21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56]",
+    "unit": "none"
+  },
+  {
+    "id": 141,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[3,8,14,18,20]",
+    "unit": "none"
+  },
+  {
+    "id": 142,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[6,10,11,13,48]",
+    "unit": "none"
+  },
+  {
+    "id": 143,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[1,2,3,4,27,32,37,42,47,52]",
+    "unit": "light_sound"
+  },
+  {
+    "id": 144,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[4,7,12,15,19]",
+    "unit": "none"
+  },
+  {
+    "id": 145,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[17,18,19,20,31,36,41,46,51,56]",
+    "unit": "school_refusal"
+  },
+  {
+    "id": 146,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[9,10,11,12,29,34,39,44,49,54]",
+    "unit": "street"
+  },
+  {
+    "id": 147,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[1,2,3,4,27,32,37,42,47,52]",
+    "unit": "light_sound"
+  },
+  {
+    "id": 148,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[2,4,8,13,32]",
+    "unit": "none"
+  },
+  {
+    "id": 149,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[13,14,15,16,30,35,40,45,50,55]",
+    "unit": "theme_park"
+  },
+  {
+    "id": 150,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[17,18,19,20,31,36,41,46,51,56]",
+    "unit": "school_refusal"
+  },
+  {
+    "id": 151,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[5,6,7,8,28,33,38,43,48,53]",
+    "unit": "idol"
+  },
+  {
+    "id": 152,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[9,11,14,16,44]",
+    "unit": "none"
+  },
+  {
+    "id": 153,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[7,11,12,19,53]",
+    "unit": "none"
+  },
+  {
+    "id": 154,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[9,10,11,12,29,34,39,44,49,54]",
+    "unit": "street"
+  },
+  {
+    "id": 155,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[1,2,9,17,36]",
+    "unit": "none"
+  },
+  {
+    "id": 156,
+    "bonusAttr": "happy",
+    "bonusCharacter": "[6,8,18,20,38]",
+    "unit": "none"
+  },
+  {
+    "id": 157,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[5,6,7,8,28,33,38,43,48,53]",
+    "unit": "idol"
+  },
+  {
+    "id": 158,
+    "bonusAttr": "cute",
+    "bonusCharacter": "[1,3,15,16,47]",
+    "unit": "none"
+  },
+  {
+    "id": 159,
+    "bonusAttr": "pure",
+    "bonusCharacter": "[2,4,14,32,50]",
+    "unit": "none"
+  },
+  {
+    "id": 160,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[5,7,13,15,20]",
+    "unit": "none"
+  },
+  {
+    "id": 161,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[17,18,19,20,31,36,41,46,51,56]",
+    "unit": "school_refusal"
+  },
+  {
+    "id": 162,
+    "bonusAttr": "cool",
+    "bonusCharacter": "[1,2,3,4,27,32,37,42,47,52]",
+    "unit": "light_sound"
+  },
+  {
+    "id": 163,
+    "bonusAttr": "none",
+    "bonusCharacter": "[9,10,11,12]",
+    "unit": "street"
+  },
+  {
+    "id": 164,
+    "bonusAttr": "mysterious",
+    "bonusCharacter": "[13,14,15,16,30,35,40,45,50,55]",
+    "unit": "theme_park"
+  }
+]
