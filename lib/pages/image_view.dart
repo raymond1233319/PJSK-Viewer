@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:photo_view/photo_view.dart';
-import 'package:pjsk_viewer/utils/audio_service.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:pjsk_viewer/utils/helper.dart';
 
 class FullScreenImagePage extends StatelessWidget {
   final String imageUrl;
@@ -15,6 +14,7 @@ class FullScreenImagePage extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
+    final updatedImageUrl = imageUrl.replaceAll(RegExp(r'\.\w+$'), '.png');
     return Stack(
       children: [
         Container(color: Colors.black),
@@ -26,9 +26,9 @@ class FullScreenImagePage extends StatelessWidget {
             loadingBuilder:
                 (context, event) =>
                     const Center(child: CircularProgressIndicator()),
-            imageProvider: CachedNetworkImageProvider(imageUrl),
+            imageProvider: CachedNetworkImageProvider(updatedImageUrl),
             minScale: PhotoViewComputedScale.contained,
-            maxScale: PhotoViewComputedScale.contained * 2,
+            maxScale: PhotoViewComputedScale.contained * 3,
           ),
         ),
         // back & download buttons in a SafeArea
@@ -47,11 +47,7 @@ class FullScreenImagePage extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.download, color: Colors.white),
                   onPressed: () async {
-                    final file = await downloadToDevice(context, imageUrl);
-                    if (file != null) {
-                      final params = ShareParams(files: [XFile(file.path)]);
-                      await SharePlus.instance.share(params);
-                    }
+                    await downloadToDevice(context, updatedImageUrl);
                   },
                 ),
               ],
