@@ -177,7 +177,9 @@ class _GachaDetailPageState extends State<GachaDetailPage> {
                                       ?.translate('common', "type")
                                       .translated ??
                                   'Type',
-                              appLocalizations.translate(_gacha!['gachaType']),
+                              appLocalizations.translate(
+                                "gacha_${_gacha!['gachaType']}",
+                              ),
                             ),
 
                             // Summary

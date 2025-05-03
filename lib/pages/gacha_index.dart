@@ -62,7 +62,7 @@ class _GachaIndexPageState extends State<GachaIndexPage> {
     final String endDateStr = fmt.format(
       DateTime.fromMillisecondsSinceEpoch(g['endAt'] as int? ?? 0).toLocal(),
     );
-    String gachaTypeDisplay = applocalizations.translate(g['gachaType']);
+    String gachaTypeDisplay = applocalizations.translate('gacha_${g['gachaType']}');
     final subTitleText = "$gachaTypeDisplay\n$startDateStr ~ \n$endDateStr";
     bool showBanner = false;
     final Widget top =

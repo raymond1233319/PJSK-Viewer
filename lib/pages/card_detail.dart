@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:pjsk_viewer/i18n/app_localizations.dart';
 import 'package:pjsk_viewer/pages/event_detail.dart';
@@ -178,20 +179,23 @@ class _CardDetailPageState extends State<CardDetailPage> {
                       children: [
                         MultiImageSelector(
                           options: [
-                            MultiImageOption(
-                              label:
-                                  localizations
-                                      ?.translate(
-                                        'card',
-                                        "tab",
-                                        innerKey: "title[0]",
-                                      )
-                                      .translated ??
-                                  'Normal image',
-                              imageUrl: normalUrl,
-                            ),
-                            if (cardRarity == 'rarity_4' ||
-                                cardRarity == 'rarity_3')
+                            if (_cardData!['initialSpecialTrainingStatus'] !=
+                                'done')
+                              MultiImageOption(
+                                label:
+                                    localizations
+                                        ?.translate(
+                                          'card',
+                                          "tab",
+                                          innerKey: "title[0]",
+                                        )
+                                        .translated ??
+                                    'Normal image',
+                                imageUrl: normalUrl,
+                              ),
+                            if (_cardData!['specialTrainingCosts'] != '[]' ||
+                                _cardData!['initialSpecialTrainingStatus'] ==
+                                    'done')
                               MultiImageOption(
                                 label:
                                     localizations
@@ -336,6 +340,23 @@ class _CardDetailPageState extends State<CardDetailPage> {
                               ['assets/$cardRarity.png'],
                             ),
 
+                            // Training cost
+                            if (_cardData!['specialTrainingCosts'] != '[]')
+                              DetailBuilder.buildDetailRowWithWidgets(
+                                AppLocalizations.of(
+                                  context,
+                                ).translate('train_cost'),
+                                json
+                                    .decode(_cardData!['specialTrainingCosts'])
+                                    .map<Widget>(
+                                      (entry) =>
+                                          DetailBuilder.buildResourceItem(
+                                            entry['cost'],
+                                          ),
+                                    )
+                                    .toList(),
+                              ),
+
                             // Type
                             if (_cardData?['gachaTypes'] != '')
                               DetailBuilder.buildTextRow(
@@ -344,7 +365,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
                                         .translated ??
                                     'Type',
                                 appLocalizations.translate(
-                                  _cardData?['gachaTypes'],
+                                  _cardData?['gachaType'],
                                 ),
                               ),
 
@@ -355,9 +376,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
                                       ?.translate('common', 'thumb')
                                       .translated ??
                                   'Thumbnail',
-                              _cardData!['assetbundleName'],
-                              cardRarity ?? 'rarity_4',
-                              _cardData!['attr'],
+                              _cardData,
                             ),
 
                             // Skill
@@ -578,34 +597,14 @@ class _CardDetailPageState extends State<CardDetailPage> {
                             ),
                             if (episodes != null && episodes.isNotEmpty)
                               Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Expanded(
-                                    child: Container(
-                                      padding: const EdgeInsets.all(16),
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue.shade50,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        episodes[0]['title'],
-                                        textAlign: TextAlign.center,
-                                      ),
+                                  for (final episode in episodes)
+                                    DetailBuilder.buildEpisode(
+                                      context,
+                                      episode,
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Container(
-                                      padding: const EdgeInsets.all(16),
-                                      decoration: BoxDecoration(
-                                        color: Colors.green.shade50,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        episodes[1]['title'],
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                  ),
                                 ],
                               ),
                           ],
