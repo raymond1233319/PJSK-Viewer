@@ -4,6 +4,11 @@ import 'dart:ui' as ui;
 import 'package:intl/intl.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
 import 'package:pjsk_viewer/i18n/app_localizations.dart';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart' as perm;
+import 'package:share_plus/share_plus.dart';
 
 class MarqueeText extends StatefulWidget {
   final String text;
@@ -259,4 +264,62 @@ Widget buildFullWidthItem(
   required double rawH,
 }) {
   return AspectRatio(aspectRatio: rawW / rawH, child: child);
+}
+
+/// Downloads the file at [url] to the device’s downloads directory (or app doc dir),
+/// showing SnackBars for status.
+Future<void> downloadToDevice(BuildContext context, String url) async {
+  final localizations = AppLocalizations.of(context);
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(localizations.translate('downloading_message'))),
+  );
+  try {
+    if (Platform.isAndroid) {
+      bool permissionGranted = false;
+      var status = await perm.Permission.storage.status;
+      if (status.isGranted) {
+        permissionGranted = true;
+      } else {
+        status = await perm.Permission.storage.request();
+        if (status.isGranted) {
+          permissionGranted = true;
+        }
+      }
+      if (!permissionGranted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              localizations.translate('storage_permission_required_message'),
+            ),
+          ),
+        );
+      }
+      final fileName = url.split('/').last;
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/$fileName');
+      final resp = await http.get(Uri.parse(url));
+      debugPrint(url);
+      await file.writeAsBytes(resp.bodyBytes);
+      final params = ShareParams(files: [XFile(file.path)]);
+      await SharePlus.instance.share(params);
+    }
+    if (Platform.isIOS) {
+      final box = context.findRenderObject() as RenderBox?;
+      final params = ShareParams(
+        uri: Uri.parse(url),
+        sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
+      );
+      SharePlus.instance.share(params);
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          localizations
+              .translate('download_failed_message')
+              .replaceFirst('%s', '$e'),
+        ),
+      ),
+    );
+  }
 }

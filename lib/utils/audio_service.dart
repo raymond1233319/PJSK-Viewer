@@ -1,12 +1,9 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:permission_handler/permission_handler.dart' as perm;
+import 'package:pjsk_viewer/utils/helper.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:pjsk_viewer/i18n/app_localizations.dart';
-import 'package:share_plus/share_plus.dart';
 
 // Helper class for position data
 class PositionData {
@@ -23,51 +20,7 @@ String formatDuration(Duration d) {
   return "$minutes:$seconds";
 }
 
-/// Downloads the file at [url] to the device’s downloads directory (or app doc dir),
-/// showing SnackBars for status.
-Future<File?> downloadToDevice(BuildContext context, String url) async {
-  final localizations = AppLocalizations.of(context);
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(localizations.translate('downloading_message'))),
-  );
-  try {
-    if (Platform.isAndroid) {
-      var status = await perm.Permission.storage.status;
-      if (!status.isGranted) {
-        status = await perm.Permission.storage.request();
-        if (!status.isGranted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                localizations.translate('storage_permission_required_message'),
-              ),
-            ),
-          );
-          return null;
-        }
-      }
-    }
-    final fileName = url.split('/').last;
-    final dir =
-        await getDownloadsDirectory() ??
-        await getApplicationDocumentsDirectory();
-    final file = File('${dir.path}/$fileName');
-    final resp = await http.get(Uri.parse(url));
-    await file.writeAsBytes(resp.bodyBytes);
-    return file;
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          localizations
-              .translate('download_failed_message')
-              .replaceFirst('%s', '$e'),
-        ),
-      ),
-    );
-  }
-  return null;
-}
+
 
 /// A full-featured audio player widget with a progress bar, play/pause,
 /// replay, download placeholder, and volume control.
@@ -140,14 +93,7 @@ class AudioPlayerFull extends StatelessWidget {
                     onPressed: () async {
                       final url = audioService.currentAudioUrl;
                       if (url == null) return;
-                      // first download to a temp file
-                      final file = await downloadToDevice(context, url);
-
-                      if (file != null) {
-                        final params = ShareParams(files: [XFile(file.path)]);
-
-                        await SharePlus.instance.share(params);
-                      }
+                      await downloadToDevice(context, url);
                     },
                   ),
                 ),
@@ -293,14 +239,7 @@ class SimpleAudioPlayer extends StatelessWidget {
                 onPressed: () async {
                   final url = audioService.currentAudioUrl;
                   if (url == null) return;
-                  // first download to a temp file
-                  final file = await downloadToDevice(context, url);
-
-                  if (file != null) {
-                    final params = ShareParams(files: [XFile(file.path)]);
-
-                    await SharePlus.instance.share(params);
-                  }
+                  await downloadToDevice(context, url);
                 },
               ),
             ),

@@ -25,7 +25,7 @@ class LocalizedText {
   String get combined =>
       japaneseText.isNotEmpty &&
               translatedText.isNotEmpty &&
-              japaneseText != translatedText
+              japaneseText.toString() != translatedText.toString()
           ? "$translatedText | $japaneseText"
           : toString();
 
