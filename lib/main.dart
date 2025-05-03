@@ -39,7 +39,7 @@ class _AppInitializerState extends State<AppInitializer> {
   }
 
   Future<void> _setLocale() async {
-    // load saved locale    rm -r android/app/src/main/res/mipmap-*/
+    // load saved locale
     final prefs = await SharedPreferences.getInstance();
     String? code = prefs.getString('app_locale');
 
