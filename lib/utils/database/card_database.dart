@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'package:path/path.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
@@ -32,6 +33,7 @@ class CardDatabase {
               eventId INTEGER,
               specialTrainingSkillId INTEGER,
               specialTrainingSkillName TEXT,
+              initialSpecialTrainingStatus TEXT,
               costumes TEXT,
               cardEpisodes TEXT
             )
@@ -106,9 +108,10 @@ class CardDatabase {
             'eventId': -1, // Default value, will be updated later
             'specialTrainingSkillId': card['specialTrainingSkillId'],
             'specialTrainingSkillName': card['specialTrainingSkillName'],
+            'initialSpecialTrainingStatus':
+                card['initialSpecialTrainingStatus'],
             'costumes': json.encode([]), // Default, updated later
             'unit': 'none', // Default, updated later
-            // 'cardParameters' is omitted - decide if needed and how to store
           }, conflictAlgorithm: ConflictAlgorithm.replace);
           processedCount++;
           // Commit periodically
@@ -309,16 +312,6 @@ class CardDatabase {
         where: 'cardId = ?',
         whereArgs: [id],
       );
-      final List<String> types =
-          mappings.map((m) => m['gachaType'] as String).toList();
-      String gachaType = '';
-      if (types.contains('birthday')) {
-        gachaType = 'birthday';
-      } else if (types.contains('ordinary')) {
-        gachaType = 'ordinary';
-      } else if (types.contains('limited')) {
-        gachaType = 'limited';
-      }
 
       final List<int> gachaIds =
           mappings
@@ -337,10 +330,23 @@ class CardDatabase {
           orderBy: 'id DESC',
         );
       }
-
-      // Attach to the card map
-      card['gachaTypes'] = gachaType;
       card['gachas'] = gachaList;
+
+      // Get gachaType
+      final pref = await SharedPreferences.getInstance();
+      final List<Map<String, dynamic>> gachaTypes =
+          json
+              .decode(pref.getString('cardSupplies') ?? '[]')
+              .cast<Map<String, dynamic>>()
+              .toList();
+
+      final Map<int, String> cardSupplyTypeMap = {
+        for (var supply in gachaTypes)
+          if (supply['id'] != null && supply['cardSupplyType'] != null)
+            supply['id'] as int: supply['cardSupplyType'] as String,
+      };
+
+      card['gachaType'] = cardSupplyTypeMap[card['cardSupplyId']] ?? '';
 
       // Fetch the event ID for this card
       final int eventId = card['eventId'] as int? ?? -1;
@@ -359,14 +365,13 @@ class CardDatabase {
       } else {
         card['event'] = null;
       }
-
-      // Determine if the card is a festival limited card
-      if ([12, 13, 23, 24].contains(card['skillId'])) {
-        card['gachaTypes'] = 'festival';
-      }
-
       return card;
     } catch (e) {
+      developer.log(
+        'Error fetching card by ID: $e',
+        name: 'CardDatabase.getCardById',
+        error: e,
+      );
       return null;
     } finally {
       if (db != null && db.isOpen) {
@@ -389,37 +394,26 @@ class CardDatabase {
         orderBy: 'id DESC',
       );
 
-      // Fetch all mappings from card_gacha_map
-      final List<Map<String, dynamic>> mappings = await db.query(
-        'card_gacha_map',
-        columns: ['cardId', 'gachaType'],
-      );
+      // Get gachaType mapping
+      final pref = await SharedPreferences.getInstance();
+      final List<Map<String, dynamic>> gachaTypesRaw =
+          json
+              .decode(pref.getString('cardSupplies') ?? '[]')
+              .cast<Map<String, dynamic>>()
+              .toList();
 
-      // Group gachaType values by cardId
-      final Map<int, List<String>> gachaTypesByCard = {};
-      for (final mapRow in mappings) {
-        final int cardId = mapRow['cardId'] as int;
-        final String type = mapRow['gachaType'] as String;
-        gachaTypesByCard.putIfAbsent(cardId, () => <String>[]).add(type);
-      }
+      // Build a map from cardSupplyId to cardSupplyType
+      final Map<int, String> cardSupplyTypeMap = {
+        for (var supply in gachaTypesRaw)
+          if (supply['id'] != null && supply['cardSupplyType'] != null)
+            supply['id'] as int: supply['cardSupplyType'] as String,
+      };
 
-      // build final list, applying "festival" override based on skillId
+      // build final list, applying gachaType from the map
       final List<Map<String, dynamic>> cardIndex =
           cards.map((cardRow) {
-            final int id = cardRow['id'] as int;
-            String type = '';
-            final List<String> types = gachaTypesByCard[id] ?? [];
-            if (types.contains('birthday')) {
-              type = 'birthday';
-            } else if (types.contains('ordinary')) {
-              type = 'ordinary';
-            } else if (types.contains('limited')) {
-              type = 'limited';
-            }
-            final int skillId = cardRow['skillId'] as int? ?? 0;
-            if ([12, 13, 23, 24].contains(skillId)) {
-              type = 'festival';
-            }
+            final int cardSupplyId = cardRow['cardSupplyId'] as int? ?? -1;
+            final String type = cardSupplyTypeMap[cardSupplyId] ?? '';
             return {...cardRow, 'gachaType': type};
           }).toList();
 

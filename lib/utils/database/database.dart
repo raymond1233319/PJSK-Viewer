@@ -50,6 +50,7 @@ Future<Map<String, String>> buildFetchUrls() async{
     'cardEpisodes': "$baseUrl/cardEpisodes.json",
     'eventStories': "$baseUrl/eventStories.json",
     'another3dmvCutIns': "$baseUrl/another3dmvCutIns.json",
+    'cardSupplies': "$baseUrl/cardSupplies.json",
   };
 }
 
@@ -118,7 +119,7 @@ Future<void> databaseInitialization(void Function(String) onProgress) async {
 
   saveFetchUrlsToPrefs(
     fetchedDataMap: fetchedDataMap,
-    keys: ['skills', 'outsideCharacters'],
+    keys: ['skills', 'outsideCharacters', 'cardSupplies'],
   );
 
   onProgress('Data fetching complete.');

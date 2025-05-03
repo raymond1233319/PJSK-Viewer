@@ -75,13 +75,27 @@ class FilterOptions {
     ];
 
     cardTypeOptions = [
-      {'display': appLocalizations.translate('ordinary'), 'value': 'ordinary'},
-      {'display': appLocalizations.translate('limited'), 'value': 'limited'},
-      {'display': appLocalizations.translate('birthday'), 'value': 'birthday'},
-      {'display': appLocalizations.translate('festival'), 'value': 'festival'},
+      {'display': appLocalizations.translate('normal'), 'value': 'normal'},
       {
-        'display': appLocalizations.translate('other'),
-        'value': 'cardType:other',
+        'display': appLocalizations.translate('term_limited'),
+        'value': 'term_limited',
+      },
+      {'display': appLocalizations.translate('birthday'), 'value': 'birthday'},
+      {
+        'display': appLocalizations.translate('colorful_festival_limited'),
+        'value': 'colorful_festival_limited',
+      },
+      {
+        'display': appLocalizations.translate('bloom_festival_limited'),
+        'value': 'bloom_festival_limited',
+      },
+      {
+        'display': appLocalizations.translate('unit_event_limited'),
+        'value': 'unit_event_limited',
+      },
+      {
+        'display': appLocalizations.translate('collaboration_limited'),
+        'value': 'collaboration_limited',
       },
     ];
     eventTypeOptions = [
@@ -153,12 +167,27 @@ class FilterOptions {
     ];
 
     gachatypeOptions = [
-      {'display': appLocalizations.translate('ordinary'), 'value': 'ordinary'},
-      {'display': appLocalizations.translate('limited'), 'value': 'limited'},
-      {'display': appLocalizations.translate('festival'), 'value': 'festival'},
-      {'display': appLocalizations.translate('normal'), 'value': 'normal'},
-      {'display': appLocalizations.translate('beginner'), 'value': 'beginner'},
-      {'display': appLocalizations.translate('gift'), 'value': 'gift'},
+      {
+        'display': appLocalizations.translate('gacha_ordinary'),
+        'value': 'ordinary',
+      },
+      {
+        'display': appLocalizations.translate('gacha_limited'),
+        'value': 'limited',
+      },
+      {
+        'display': appLocalizations.translate('gacha_festival'),
+        'value': 'festival',
+      },
+      {
+        'display': appLocalizations.translate('gacha_normal'),
+        'value': 'normal',
+      },
+      {
+        'display': appLocalizations.translate('gacha_beginner'),
+        'value': 'beginner',
+      },
+      {'display': appLocalizations.translate('gacha_gift'), 'value': 'gift'},
     ];
 
     cardSkillTypeOptions = [

@@ -35,7 +35,6 @@ class GachaDatabase {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         gachaId INTEGER NOT NULL,
         cardId INTEGER NOT NULL,
-        gachaType TEXT NOT NULL,
         UNIQUE(gachaId, cardId)
       );
     ''');
@@ -179,7 +178,6 @@ class GachaDatabase {
         latestGachaId,
         ceilList,
         gachaList,
-        another3dmvCutIns,
       );
 
       final prefs = await SharedPreferences.getInstance();
@@ -195,7 +193,6 @@ class GachaDatabase {
     int latestGachaId,
     List<dynamic> ceilList,
     List<dynamic> gachaList,
-    List<dynamic> another3dmvCutIns,
   ) async {
     // build map: ceilItemId → newType
     final Map<int, String> ceilTypeById = {};
@@ -234,7 +231,6 @@ class GachaDatabase {
         await typeUpdateBatch.commit();
       }
     });
-    // ─────────────────────────────────────────────────────────────────────────
     // Populate card_gacha_map for pick-up members
     await db.transaction((txn) async {
       final rows = await txn.query(
@@ -279,39 +275,6 @@ class GachaDatabase {
       }
     });
 
-    // ─── map “ordinary” gachaDetails → card_gacha_map ───────────────────────────
-    await db.transaction((txn) async {
-      final List<Map<String, dynamic>> latestOrdinaryResult = await txn.query(
-        'gachas',
-        columns: ['id', 'gachaDetails'],
-        where: 'gachaType = ?',
-        whereArgs: ['ordinary'],
-        orderBy: 'id DESC', // Get the one with the highest ID
-        limit: 1,
-      );
-      final List<dynamic> details =
-          json.decode(latestOrdinaryResult.first['gachaDetails'])
-              as List<dynamic>;
-      final Batch ordinaryUpdateBatch = txn.batch();
-      int ordinaryUpdateCount = 0;
-      for (final detail in details) {
-        if (detail['cardId'] != null) {
-          final int cardId = detail['cardId'] as int;
-          ordinaryUpdateBatch.insert('card_gacha_map', {
-            'cardId': cardId,
-            'gachaType': 'ordinary',
-            'gachaId': -1,
-          }, conflictAlgorithm: ConflictAlgorithm.replace);
-          ordinaryUpdateCount++;
-          if (ordinaryUpdateCount % 500 == 0) {
-            await ordinaryUpdateBatch.commit(noResult: true);
-          }
-        }
-      }
-      if (ordinaryUpdateCount > 0) {
-        await ordinaryUpdateBatch.commit();
-      }
-    });
 
     // --- Update Gacha Type to 'festival' based on Rarity Rates ---
     await db.transaction((txn) async {
@@ -363,21 +326,6 @@ class GachaDatabase {
       if (festivalUpdateCount > 0) {
         await festivalUpdateBatch.commit();
       }
-    });
-
-    // Update gachaType for World Links based on another3dmvCutIns
-    await db.transaction((txn) async {
-      final Batch worldLinkUpdateBatch = txn.batch();
-      for (final cutIn in another3dmvCutIns) {
-        final int cardId = cutIn['cardId'] as int;
-        worldLinkUpdateBatch.update(
-          'card_gacha_map',
-          {'gachaType': 'limited'},
-          where: 'cardId = ?',
-          whereArgs: [cardId],
-        );
-      }
-      await worldLinkUpdateBatch.commit();
     });
   }
 

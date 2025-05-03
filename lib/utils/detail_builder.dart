@@ -70,6 +70,22 @@ class DetailBuilder {
     );
   }
 
+  static Widget buildDetailRowWithWidgets(String label, List<Widget> widgets) {
+    return buildDetailRow(
+      label,
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            const SizedBox(height: 4),
+            Wrap(spacing: 8.0, runSpacing: 4.0, children: widgets),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// Simple row of label + text value
   static Widget buildTextRow(String label, String value) {
     return buildDetailRow(
@@ -493,10 +509,15 @@ class DetailBuilder {
   static Widget buildCardThumbnailRow(
     BuildContext context,
     String label,
-    String assetbundleName,
-    String rarity,
-    String attribute,
+    final cardData,
   ) {
+    String assetbundleName = cardData!['assetbundleName'];
+    String attribute = cardData!['attr'];
+    String rarity = cardData!['cardRarityType'];
+    bool showNormal = cardData!['initialSpecialTrainingStatus'] != 'done';
+    bool showTrained =
+        cardData!['specialTrainingCosts'] != '[]' ||
+        cardData!['initialSpecialTrainingStatus'] == 'done';
     return buildDetailRow(
       label,
       Wrap(
@@ -504,13 +525,14 @@ class DetailBuilder {
         runSpacing: 8.0,
         alignment: WrapAlignment.end,
         children: [
-          buildCardThumbnail(
-            context: context,
-            assetbundleName: assetbundleName,
-            rarity: rarity,
-            attribute: attribute,
-          ),
-          if (rarity == "rarity_3" || rarity == "rarity_4")
+          if (showNormal)
+            buildCardThumbnail(
+              context: context,
+              assetbundleName: assetbundleName,
+              rarity: rarity,
+              attribute: attribute,
+            ),
+          if (showTrained)
             buildCardThumbnail(
               context: context,
               assetbundleName: assetbundleName.replaceFirst(
@@ -742,6 +764,145 @@ class DetailBuilder {
           ),
         ],
       ),
+    );
+  }
+
+  static Widget buildEpisode(
+    BuildContext context,
+    Map<String, dynamic> episode,
+  ) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color:
+              episode['cardEpisodePartType'] == 'first_part'
+                  ? Colors.blue.shade50
+                  : Colors.green.shade50,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: GestureDetector(
+          onTap: () {
+            _showResourceCostsModal(context, episode);
+          },
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                episode['title'],
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Icon(Icons.arrow_forward_ios_rounded),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Builds a single resource row (icon + quantity).
+  static Widget buildResourceItem(Map<String, dynamic> cost) {
+    final resourceId = cost['resourceId'];
+    final resourceType = cost['resourceType'];
+    final quantity = cost['quantity'];
+    final imageUrl =
+        'https://storage.sekai.best/sekai-jp-assets/thumbnail/$resourceType/$resourceType$resourceId.webp';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          CachedNetworkImage(
+            imageUrl: imageUrl,
+            width: 32,
+            height: 32,
+            placeholder:
+                (ctx, url) => const SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+            errorWidget:
+                (ctx, err, stack) => const Icon(Icons.error_outline, size: 32),
+          ),
+          const SizedBox(width: 8),
+          Text('x$quantity'),
+        ],
+      ),
+    );
+  }
+
+  // Helper function to show the modal
+  static void _showResourceCostsModal(
+    BuildContext context,
+    Map<String, dynamic> episode,
+  ) {
+    final localizations = ContentLocalizations.of(context)!;
+    List costs = episode['costs'] as List;
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  localizations.translate('common', 'releaseCosts').translated,
+                  style: const TextStyle(
+                    fontSize: 16.0, // Adjust font size as needed
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                ...costs.map<Widget>(
+                  (cost) => buildResourceItem(cost as Map<String, dynamic>),
+                ),
+                Text(
+                  localizations.translate('common', 'rewards').translated,
+                  style: const TextStyle(
+                    fontSize: 16.0, // Adjust font size as needed
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Row(
+                  children: [
+                    CachedNetworkImage(
+                      imageUrl:
+                          'https://storage.sekai.best/sekai-jp-assets/thumbnail/common_material/jewel.webp',
+                      width: 32,
+                      height: 32,
+                      placeholder:
+                          (ctx, url) => const SizedBox(
+                            width: 32,
+                            height: 32,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                      errorWidget:
+                          (context, error, stackTrace) =>
+                              const Icon(Icons.error_outline, size: 32),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'x${episode['cardEpisodePartType'] == 'first_part' ? 25 : 50}',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

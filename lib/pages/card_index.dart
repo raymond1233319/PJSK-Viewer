@@ -134,9 +134,11 @@ class _CardIndexPageState extends State<CardIndexPage> {
             showTrainedImage && trainedUrl != null ? trainedUrl : normalUrl!;
         final altImageUrl = showTrainedImage ? normalUrl : trainedUrl ?? '';
         jumpToTrainedImage = showTrainedImage;
-        return buildFullWidthItem(context, Stack(
-          fit: StackFit.expand,
-          children: [
+        return buildFullWidthItem(
+          context,
+          Stack(
+            fit: StackFit.expand,
+            children: [
               CachedNetworkImage(
                 imageUrl: imageUrl,
                 fit: BoxFit.contain,
@@ -162,24 +164,25 @@ class _CardIndexPageState extends State<CardIndexPage> {
                   );
                 },
               ),
-            Image.asset(
-              'assets/frame/cardFrame_$rarity.png',
-              fit: BoxFit.cover,
-            ),
-            Positioned(
-              top: 3,
-              right: 3,
-              child: Image.asset(
-                attributeAssetPath,
-                height: 30,
-                width: 30,
-                fit: BoxFit.contain,
+              Image.asset(
+                'assets/frame/cardFrame_$rarity.png',
+                fit: BoxFit.cover,
               ),
-            ),
-          ],
-        ),
-        rawH: 1440,
-        rawW: 2520);
+              Positioned(
+                top: 3,
+                right: 3,
+                child: Image.asset(
+                  attributeAssetPath,
+                  height: 30,
+                  width: 30,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ],
+          ),
+          rawH: 1440,
+          rawW: 2520,
+        );
       },
     );
 
@@ -301,9 +304,6 @@ class _CardIndexPageState extends State<CardIndexPage> {
               localizations?.translate('common', 'type').translated ?? 'Type',
           options: filterOptions.cardTypeOptions,
           filterFunc: (card, selected) {
-            if (selected.contains('cardType:other')) {
-              return card['gachaType'] == '';
-            }
             return selected.contains(card['gachaType']);
           },
         ),

@@ -8,7 +8,6 @@ import 'package:pjsk_viewer/pages/event_detail.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
 import 'package:pjsk_viewer/pages/index.dart';
 import 'package:pjsk_viewer/utils/database/event_database.dart';
-import 'package:pjsk_viewer/utils/helper.dart';
 
 class EventPage extends StatefulWidget {
   const EventPage({super.key});
