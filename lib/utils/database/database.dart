@@ -29,7 +29,7 @@ Future<String> get getDatabaseUrl async {
   return version.isNotEmpty ? "$storedBase/$version" : storedBase;
 }
 
-Future<Map<String, String>> buildFetchUrls() async{
+Future<Map<String, String>> buildFetchUrls() async {
   final baseUrl = await getDatabaseUrl;
   return {
     'cards': "$baseUrl/cards.json",
@@ -51,6 +51,8 @@ Future<Map<String, String>> buildFetchUrls() async{
     'eventStories': "$baseUrl/eventStories.json",
     'another3dmvCutIns': "$baseUrl/another3dmvCutIns.json",
     'cardSupplies': "$baseUrl/cardSupplies.json",
+    'cheerfulCarnivalTeams': "$baseUrl/cheerfulCarnivalTeams.json",
+    'cheerfulCarnivalSummaries': "$baseUrl/cheerfulCarnivalSummaries.json",
   };
 }
 
@@ -117,9 +119,16 @@ Future<void> databaseInitialization(void Function(String) onProgress) async {
     await Future.wait(dataFetchFutures),
   );
 
+  // Save fetched data to SharedPreferences
   saveFetchUrlsToPrefs(
     fetchedDataMap: fetchedDataMap,
-    keys: ['skills', 'outsideCharacters', 'cardSupplies'],
+    keys: [
+      'skills',
+      'outsideCharacters',
+      'cardSupplies',
+      'cheerfulCarnivalTeams',
+      'cheerfulCarnivalSummaries',
+    ],
   );
 
   onProgress('Data fetching complete.');

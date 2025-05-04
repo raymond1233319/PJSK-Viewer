@@ -173,12 +173,7 @@ class GachaDatabase {
         );
       });
 
-      await _updateGachaType(
-        db,
-        latestGachaId,
-        ceilList,
-        gachaList,
-      );
+      await _updateGachaType(db, latestGachaId, ceilList, gachaList);
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('gachas_version', newVersionHash);
@@ -261,7 +256,6 @@ class GachaDatabase {
             mapInsertBatch.insert('card_gacha_map', {
               'gachaId': gid,
               'cardId': cardId,
-              'gachaType': baseType,
             }, conflictAlgorithm: ConflictAlgorithm.replace);
             mapInsertCount++;
             if (mapInsertCount % 500 == 0) {
@@ -274,7 +268,6 @@ class GachaDatabase {
         await mapInsertBatch.commit(noResult: true);
       }
     });
-
 
     // --- Update Gacha Type to 'festival' based on Rarity Rates ---
     await db.transaction((txn) async {

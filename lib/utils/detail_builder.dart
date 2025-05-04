@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -903,6 +904,110 @@ class DetailBuilder {
           ],
         );
       },
+    );
+  }
+
+  static buildCheerfulCarnivalColumn(
+    context,
+    cheerfulCarnivalTeams,
+    cheerfulCarnivalSummaries,
+    String assetbundleName,
+    int eventId,
+  ) {
+    final localizations = ContentLocalizations.of(context)!;
+    final team =
+        cheerfulCarnivalTeams
+            .where((team) => team['eventId'] == eventId)
+            .toList();
+    final summaries =
+        cheerfulCarnivalSummaries
+            .where((summary) => summary['eventId'] == eventId)
+            .toList();
+    final theme = summaries.isNotEmpty ? summaries[0]['theme'] : '';
+    final leftName = team.isNotEmpty ? team[0]['teamName'] : '';
+    final rightName = team.length > 1 ? team[1]['teamName'] : '';
+    final leftImageUrl =
+        team.isNotEmpty
+            ? 'https://storage.sekai.best/sekai-jp-assets/event/$assetbundleName/team_image/${team[0]['assetbundleName']}.webp'
+            : '';
+    final rightImageUrl =
+        team.length > 1
+            ? 'https://storage.sekai.best/sekai-jp-assets/event/$assetbundleName/team_image/${team[1]['assetbundleName']}.webp'
+            : '';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          localizations
+              .translate('event', "type", innerKey: 'cheerful_carnival')
+              .translated,
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          theme, 
+          style: Theme.of(context).textTheme.titleMedium,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // left team
+            Expanded(
+              child: Column(
+                children: [
+                  if (leftImageUrl.isNotEmpty)
+                    CachedNetworkImage(
+                      imageUrl: leftImageUrl,
+                      height: 60,
+                      fit: BoxFit.contain,
+                      placeholder:
+                          (ctx, url) => SizedBox(
+                            height: 60,
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                      errorWidget:
+                          (ctx, err, st) =>
+                              const Icon(Icons.error_outline, size: 40),
+                    ),
+                  const SizedBox(height: 4),
+                  Text(leftName),
+                ],
+              ),
+            ),
+            // right team
+            Expanded(
+              child: Column(
+                children: [
+                  if (rightImageUrl.isNotEmpty)
+                    CachedNetworkImage(
+                      imageUrl: rightImageUrl,
+                      height: 60,
+                      fit: BoxFit.contain,
+                      placeholder:
+                          (ctx, url) => SizedBox(
+                            height: 60,
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                      errorWidget:
+                          (ctx, err, st) =>
+                              const Icon(Icons.error_outline, size: 40),
+                    ),
+                  const SizedBox(height: 4),
+                  Text(rightName, textAlign: TextAlign.right),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const Divider(
+          height: 8,
+          thickness: 1,
+        ),
+      ],
     );
   }
 }
