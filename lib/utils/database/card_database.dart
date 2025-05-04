@@ -308,7 +308,7 @@ class CardDatabase {
       // Fetch mappings to get gacha IDs
       final List<Map<String, dynamic>> mappings = await db.query(
         'card_gacha_map',
-        columns: ['gachaType', 'gachaId'],
+        columns: ['gachaId'],
         where: 'cardId = ?',
         whereArgs: [id],
       );

@@ -9,6 +9,7 @@ import 'package:pjsk_viewer/utils/database/event_database.dart';
 import 'package:pjsk_viewer/utils/detail_builder.dart';
 import 'package:pjsk_viewer/utils/helper.dart';
 import 'package:pjsk_viewer/utils/image_selector.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class EventDetailPage extends StatefulWidget {
   final int eventId;
@@ -79,6 +80,16 @@ class _EventDetailPageState extends State<EventDetailPage> {
         final audioUrl =
             "https://storage.sekai.best/sekai-jp-assets/event/$assetbundleName/bgm/${assetbundleName}_top.mp3";
         _audioService.loadAudio(audioUrl);
+        if (eventData['eventType'] == 'cheerful_carnival') {
+          final pref = await SharedPreferences.getInstance();
+          eventData['cheerfulCarnivalTeams'] = json.decode(
+            pref.getString('cheerfulCarnivalTeams') ?? '[]',
+          );
+          eventData['cheerfulCarnivalSummaries'] = json.decode(
+            pref.getString('cheerfulCarnivalSummaries') ?? '[]',
+          );
+        }
+
         setState(() {
           _eventData = eventData;
           _isLoading = false;
@@ -418,6 +429,16 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                   "Event Cards",
                               eventCards,
                             ),
+
+                            // Cheerful Carnival
+                            if (eventType == 'cheerful_carnival')
+                              DetailBuilder.buildCheerfulCarnivalColumn(
+                                context,
+                                _eventData!['cheerfulCarnivalTeams'],
+                                _eventData!['cheerfulCarnivalSummaries'],
+                                assetbundleName!,
+                                widget.eventId,
+                              ),
 
                             // Time Points
                             ValueListenableBuilder<bool>(
