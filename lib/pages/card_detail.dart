@@ -587,6 +587,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
                               ),
 
                             // Episodes
+                            if (episodes != null && episodes.isNotEmpty)
                             Text(
                               localizations
                                       ?.translate('card', "sideStory")

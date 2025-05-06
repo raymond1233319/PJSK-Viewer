@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:pjsk_viewer/i18n/app_localizations.dart';
@@ -25,6 +26,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   Map<String, dynamic>? _eventData;
   final AudioService _audioService = AudioService();
   final ValueNotifier<bool> _showTimePointsNotifier = ValueNotifier(false);
+  List<Map<String, dynamic>> _worldBlooms = [];
 
   // --- Helper to format Duration ---
   String _formatDurationFull(Duration d, ContentLocalizations localizations) {
@@ -80,6 +82,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         final audioUrl =
             "https://storage.sekai.best/sekai-jp-assets/event/$assetbundleName/bgm/${assetbundleName}_top.mp3";
         _audioService.loadAudio(audioUrl);
+
         if (eventData['eventType'] == 'cheerful_carnival') {
           final pref = await SharedPreferences.getInstance();
           eventData['cheerfulCarnivalTeams'] = json.decode(
@@ -88,6 +91,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
           eventData['cheerfulCarnivalSummaries'] = json.decode(
             pref.getString('cheerfulCarnivalSummaries') ?? '[]',
           );
+        }
+
+        if (eventData['eventType'] == 'world_bloom') {
+          final pref = await SharedPreferences.getInstance();
+          final List<dynamic> worldBlooms = json.decode(pref.getString('worldBlooms') ?? '[]');
+          _worldBlooms = worldBlooms.map((item) => Map<String, dynamic>.from(item)).toList();
         }
 
         setState(() {
@@ -114,8 +123,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
     final startTime = _eventData?['startAt'] ?? 0;
     final endTime = _eventData?['aggregateAt'] ?? 0;
 
-    // Skip if end time is invalid or event already ended
-    if (endTime <= now || endTime <= startTime) {
+    // Skip if start time is invalid or event already ended
+    if (endTime <= now || now<= startTime) {
       return const SizedBox.shrink();
     }
 
@@ -192,20 +201,21 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final localizations = ContentLocalizations.of(context);
-    final appLocalizations = AppLocalizations.of(context);
-    // Determine event name using localizations
-    LocalizedText displayEventName = localizations!.translate(
-      'common',
-      "loading",
-    );
-
-    if (_eventData != null) {
-      displayEventName = localizations.translate(
-        'event_name',
-        _eventData!['id'].toString(),
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_eventData == null) {
+      return Center(
+        child: Text(AppLocalizations.of(context).translate('event_not_found')),
       );
     }
+    final localizations = ContentLocalizations.of(context);
+    final appLocalizations = AppLocalizations.of(context);
+
+    LocalizedText displayEventName = localizations!.translate(
+      'event_name',
+      _eventData!['id'].toString(),
+    );
 
     // Determine image URLs
     final String? assetbundleName = _eventData?['assetbundleName'];
@@ -235,324 +245,281 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
     return Scaffold(
       appBar: DetailBuilder.buildAppBar(context, displayEventName.translated),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _eventData == null
-              ? Center(
-                child: Text(appLocalizations.translate('event_not_found')),
-              )
-              : SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Image Section
+            MultiImageSelector(
+              options: [
+                MultiImageOption(
+                  label: appLocalizations.translate('logo'),
+                  imageUrl: logoUrl,
+                ),
+                if (bannerUrl != null)
+                  MultiImageOption(
+                    label: appLocalizations.translate('banner'),
+                    imageUrl: bannerUrl,
+                  ),
+                if (backgroundUrl != null)
+                  MultiImageOption(
+                    label:
+                        localizations
+                            .translate('event', "tab", innerKey: "title[1]")
+                            .translated ??
+                        'background',
+                    imageUrl: backgroundUrl,
+                  ),
+                if (characterUrl != null)
+                  MultiImageOption(
+                    label:
+                        localizations
+                            .translate('event', "tab", innerKey: "title[2]")
+                            .translated ??
+                        'Character',
+                    imageUrl: characterUrl,
+                  ),
+              ],
+            ),
+            // Audio Player Section
+            AudioPlayerFull(audioService: _audioService),
+
+            // Story Outline
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 12.0),
+              padding: const EdgeInsets.all(12.0),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.cyan, width: 1.5),
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Text(
+                eventStoryOutline,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontSize: 16),
+                textAlign: TextAlign.left,
+              ),
+            ),
+
+            // Details Section
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              margin: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Image Section
-                    MultiImageSelector(
-                      options: [
-                        MultiImageOption(
-                          label: appLocalizations.translate('logo'),
-                          imageUrl: logoUrl,
-                        ),
-                        if (bannerUrl != null)
-                          MultiImageOption(
-                            label: appLocalizations.translate('banner'),
-                            imageUrl: bannerUrl,
-                          ),
-                        if (backgroundUrl != null)
-                          MultiImageOption(
-                            label:
-                                localizations
-                                    .translate(
-                                      'event',
-                                      "tab",
-                                      innerKey: "title[1]",
-                                    )
-                                    .translated ??
-                                'background',
-                            imageUrl: backgroundUrl,
-                          ),
-                        if (characterUrl != null)
-                          MultiImageOption(
-                            label:
-                                localizations
-                                    .translate(
-                                      'event',
-                                      "tab",
-                                      innerKey: "title[2]",
-                                    )
-                                    .translated ??
-                                'Character',
-                            imageUrl: characterUrl,
-                          ),
-                      ],
-                    ),
-                    // Audio Player Section
-                    AudioPlayerFull(audioService: _audioService),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    // Remaining Time
+                    _buildRemainingTimeRow(),
 
-                    // Story Outline
-                    Container(
-                      margin: const EdgeInsets.symmetric(vertical: 12.0),
-                      padding: const EdgeInsets.all(12.0),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.cyan, width: 1.5),
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      child: Text(
-                        eventStoryOutline,
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium?.copyWith(fontSize: 16),
-                        textAlign: TextAlign.left,
-                      ),
+                    // Title
+                    DetailBuilder.buildLocalizedTextRow(
+                      localizations.translate('common', "title").translated,
+                      displayEventName,
+                    ),
+                    // ID
+                    DetailBuilder.buildTextRow(
+                      localizations.translate('common', "id").translated ??
+                          'ID',
+                      widget.eventId.toString(),
                     ),
 
-                    // Details Section
-                    Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                    //Type
+                    DetailBuilder.buildTextRow(
+                      localizations.translate('common', "type").translated ??
+                          'Type',
+                      localizations
+                              .translate('event', "type", innerKey: eventType)
+                              .translated ??
+                          eventType,
+                    ),
+
+                    // Unit
+                    if (_eventData!['unit'] != "none")
+                      DetailBuilder.buildDetailRowWithAsset(
+                        localizations.translate('common', "unit").translated ??
+                            'Unit',
+                        ['assets/jp/logol/logo_${_eventData!['unit']}.png'],
                       ),
-                      margin: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            // Remaining Time
-                            _buildRemainingTimeRow(),
 
-                            // Title
-                            DetailBuilder.buildLocalizedTextRow(
+                    // Virtual Live
+                    if (_eventData!['virtualLiveId'] != null &&
+                        _eventData!['virtualLiveId'] != 0)
+                      DetailBuilder.buildTextRow(
+                        localizations
+                                .translate('common', "virtualLive")
+                                .translated ??
+                            'Virtual Live',
+                        _eventData!['virtualLiveId'].toString(),
+                      ),
+
+                    // Bonus Info
+                    Text(
+                      localizations
+                              .translate('event', "title", innerKey: 'boost')
+                              .translated ??
+                          'Boost',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+
+                    // Bonus Characters
+                    const SizedBox(height: 12),
+                    DetailBuilder.buildBonusCharacterWidget(
+                      localizations
+                              .translate('event', "boostCharacters")
+                              .translated ??
+                          'Bonus Characters',
+                      _eventData!['bonusCharacter'] ?? '[]',
+                    ),
+
+                    // Bonus Attribute
+                    if (bonusAttr != 'none')
+                      DetailBuilder.buildDetailRowWithAsset(
+                        localizations
+                                .translate('event', "boostAttribute")
+                                .translated ??
+                            'Boost Attribute',
+                        ['assets/icon_attribute_$bonusAttr.png'],
+                      ),
+
+                    if (eventCards.isNotEmpty)
+                      Text(
+                        localizations.translate('common', "card").translated ??
+                            'Card',
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    const SizedBox(height: 12),
+
+                    // Event Cards
+                    if (eventCards.isNotEmpty)
+                      DetailBuilder.buildCardThumbnailList(
+                        context,
+                        localizations
+                                .translate('event', "eventCards")
+                                .translated ??
+                            "Event Cards",
+                        eventCards,
+                      ),
+
+                    // Cheerful Carnival
+                    if (eventType == 'cheerful_carnival')
+                      DetailBuilder.buildCheerfulCarnivalColumn(
+                        context,
+                        _eventData!['cheerfulCarnivalTeams'],
+                        _eventData!['cheerfulCarnivalSummaries'],
+                        assetbundleName!,
+                        widget.eventId,
+                      ),
+
+                    // World link
+                    if (eventType == 'world_bloom')
+                      DetailBuilder.buildWorldBloomColumn(
+                        context,
+                        widget.eventId,
+                        _worldBlooms,
+                      ),
+
+                    // Time Points
+                    ValueListenableBuilder<bool>(
+                      valueListenable: _showTimePointsNotifier,
+                      builder: (context, isExpanded, _) {
+                        return DetailBuilder.buildExpansion(
+                          context: context,
+                          title:
                               localizations
-                                  .translate('common', "title")
-                                  .translated,
-                              displayEventName,
-                            ),
-                            // ID
+                                  .translate(
+                                    'event',
+                                    "title",
+                                    innerKey: "timepoint",
+                                  )
+                                  .translated ??
+                              'Time Points',
+                          titleStyle: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                          initiallyExpanded: isExpanded,
+                          onExpansionChanged:
+                              (expanded) =>
+                                  _showTimePointsNotifier.value = expanded,
+                          children: [
                             DetailBuilder.buildTextRow(
                               localizations
-                                      .translate('common', "id")
+                                      .translate('event', "startAt")
                                       .translated ??
-                                  'ID',
-                              widget.eventId.toString(),
+                                  'Event Starts At',
+                              formatDate(_eventData!['startAt']),
                             ),
-
-                            //Type
                             DetailBuilder.buildTextRow(
                               localizations
-                                      .translate('common', "type")
+                                      .translate('event', "closeAt")
                                       .translated ??
-                                  'Type',
+                                  'Event Closes At',
+                              formatDate(_eventData!['aggregateAt']),
+                            ),
+                            DetailBuilder.buildTextRow(
                               localizations
-                                      .translate(
-                                        'event',
-                                        "type",
-                                        innerKey: eventType,
-                                      )
+                                      .translate('event', "endAt")
                                       .translated ??
-                                  eventType,
+                                  'Event Entry Available Until',
+                              formatDate(_eventData!['closedAt']),
                             ),
-
-                            // Unit
-                            if (_eventData!['unit'] != "none")
-                              DetailBuilder.buildDetailRowWithAsset(
-                                localizations
-                                        .translate('common', "unit")
-                                        .translated ??
-                                    'Unit',
-                                [
-                                  'assets/jp/logol/logo_${_eventData!['unit']}.png',
-                                ],
-                              ),
-
-                            // Virtual Live
-                            if (_eventData!['virtualLiveId'] != null &&
-                                _eventData!['virtualLiveId'] != 0)
-                              DetailBuilder.buildTextRow(
-                                localizations
-                                        .translate('common', "virtualLive")
-                                        .translated ??
-                                    'Virtual Live',
-                                _eventData!['virtualLiveId'].toString(),
-                              ),
-
-                            // Bonus Info
-                            Text(
+                            DetailBuilder.buildTextRow(
                               localizations
-                                      .translate(
-                                        'event',
-                                        "title",
-                                        innerKey: 'boost',
-                                      )
+                                      .translate('event', "rankingAnnounceAt")
                                       .translated ??
-                                  'Boost',
-                              style: Theme.of(context).textTheme.headlineSmall
-                                  ?.copyWith(fontWeight: FontWeight.bold),
+                                  'Ranking Announcement At',
+                              formatDate(_eventData!['rankingAnnounceAt']),
                             ),
-
-                            // Bonus Characters
-                            const SizedBox(height: 12),
-                            DetailBuilder.buildBonusCharacterWidget(
+                            DetailBuilder.buildTextRow(
                               localizations
-                                      .translate('event', "boostCharacters")
+                                      .translate('event', "distributionStartAt")
                                       .translated ??
-                                  'Bonus Characters',
-                              _eventData!['bonusCharacter'] ?? '[]',
-                            ),
-
-                            // Bonus Attribute
-                            if (bonusAttr != 'none')
-                              DetailBuilder.buildDetailRowWithAsset(
-                                localizations
-                                        .translate('event', "boostAttribute")
-                                        .translated ??
-                                    'Boost Attribute',
-                                ['assets/icon_attribute_$bonusAttr.png'],
-                              ),
-
-                            if (eventCards.isNotEmpty)
-                              Text(
-                                localizations
-                                        .translate('common', "card")
-                                        .translated ??
-                                    'Card',
-                                style: Theme.of(context).textTheme.headlineSmall
-                                    ?.copyWith(fontWeight: FontWeight.bold),
-                              ),
-                            const SizedBox(height: 12),
-
-                            // Event Cards
-                            if (eventCards.isNotEmpty)
-                              DetailBuilder.buildCardThumbnailList(
-                                context,
-                                localizations
-                                        .translate('event', "eventCards")
-                                        .translated ??
-                                    "Event Cards",
-                                eventCards,
-                              ),
-
-                            // Cheerful Carnival
-                            if (eventType == 'cheerful_carnival')
-                              DetailBuilder.buildCheerfulCarnivalColumn(
-                                context,
-                                _eventData!['cheerfulCarnivalTeams'],
-                                _eventData!['cheerfulCarnivalSummaries'],
-                                assetbundleName!,
-                                widget.eventId,
-                              ),
-
-                            // Time Points
-                            ValueListenableBuilder<bool>(
-                              valueListenable: _showTimePointsNotifier,
-                              builder: (context, isExpanded, _) {
-                                return DetailBuilder.buildExpansion(
-                                  context: context,
-                                  title:
-                                      localizations
-                                          .translate(
-                                            'event',
-                                            "title",
-                                            innerKey: "timepoint",
-                                          )
-                                          .translated ??
-                                      'Time Points',
-                                  titleStyle: Theme.of(context)
-                                      .textTheme
-                                      .headlineSmall
-                                      ?.copyWith(fontWeight: FontWeight.bold),
-                                  initiallyExpanded: isExpanded,
-                                  onExpansionChanged:
-                                      (expanded) =>
-                                          _showTimePointsNotifier.value =
-                                              expanded,
-                                  children: [
-                                    DetailBuilder.buildTextRow(
-                                      localizations
-                                              .translate('event', "startAt")
-                                              .translated ??
-                                          'Event Starts At',
-                                      formatDate(_eventData!['startAt']),
-                                    ),
-                                    DetailBuilder.buildTextRow(
-                                      localizations
-                                              .translate('event', "closeAt")
-                                              .translated ??
-                                          'Event Closes At',
-                                      formatDate(_eventData!['aggregateAt']),
-                                    ),
-                                    DetailBuilder.buildTextRow(
-                                      localizations
-                                              .translate('event', "endAt")
-                                              .translated ??
-                                          'Event Entry Available Until',
-                                      formatDate(_eventData!['closedAt']),
-                                    ),
-                                    DetailBuilder.buildTextRow(
-                                      localizations
-                                              .translate(
-                                                'event',
-                                                "rankingAnnounceAt",
-                                              )
-                                              .translated ??
-                                          'Ranking Announcement At',
-                                      formatDate(
-                                        _eventData!['rankingAnnounceAt'],
-                                      ),
-                                    ),
-                                    DetailBuilder.buildTextRow(
-                                      localizations
-                                              .translate(
-                                                'event',
-                                                "distributionStartAt",
-                                              )
-                                              .translated ??
-                                          'Reward Distribution From',
-                                      formatDate(
-                                        _eventData!['distributionStartAt'],
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                            // Jump to Event Tracker
-                            DetailBuilder.buildDetailRow(
-                              localizations
-                                  .translate('common', 'eventTracker')
-                                  .translated,
-                              IconButton(
-                                icon: const Icon(Icons.arrow_forward),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (_) => EventTrackerPage(
-                                            eventId: widget.eventId,
-                                          ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-
-                            //Gachas
-                            DetailBuilder.buildGachaList(
-                              context,
-                              localizations
-                                      .translate('common', "gacha")
-                                      .translated ??
-                                  'Gacha',
-                              _eventData!['gachas'],
+                                  'Reward Distribution From',
+                              formatDate(_eventData!['distributionStartAt']),
                             ),
                           ],
-                        ),
+                        );
+                      },
+                    ),
+                    // Jump to Event Tracker
+                    DetailBuilder.buildDetailRow(
+                      localizations
+                          .translate('common', 'eventTracker')
+                          .translated,
+                      IconButton(
+                        icon: const Icon(Icons.arrow_forward),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (_) =>
+                                      EventTrackerPage(eventId: widget.eventId),
+                            ),
+                          );
+                        },
                       ),
+                    ),
+
+                    //Gachas
+                    DetailBuilder.buildGachaList(
+                      context,
+                      localizations.translate('common', "gacha").translated ??
+                          'Gacha',
+                      _eventData!['gachas'],
                     ),
                   ],
                 ),
               ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

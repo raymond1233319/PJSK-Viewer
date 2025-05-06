@@ -53,6 +53,7 @@ Future<Map<String, String>> buildFetchUrls() async {
     'cardSupplies': "$baseUrl/cardSupplies.json",
     'cheerfulCarnivalTeams': "$baseUrl/cheerfulCarnivalTeams.json",
     'cheerfulCarnivalSummaries': "$baseUrl/cheerfulCarnivalSummaries.json",
+    'worldBlooms': "$baseUrl/worldBlooms.json",
   };
 }
 
@@ -128,6 +129,7 @@ Future<void> databaseInitialization(void Function(String) onProgress) async {
       'cardSupplies',
       'cheerfulCarnivalTeams',
       'cheerfulCarnivalSummaries',
+      'worldBlooms',
     ],
   );
 
@@ -309,9 +311,9 @@ Future<void> updateDatabase(context) async {
   showDialog(
     context: context,
     barrierDismissible: false,
-    builder: (ctx) {
+    builder: (context) {
       return StatefulBuilder(
-        builder: (ctx, setState) {
+        builder: (context, setState) {
           setDialogState = setState;
           return AlertDialog(
             title: const Text('Updating Database'),

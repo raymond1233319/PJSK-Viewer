@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer' as developer;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +8,7 @@ import 'package:pjsk_viewer/i18n/localizations.dart';
 import 'package:pjsk_viewer/pages/card_detail.dart';
 import 'package:pjsk_viewer/pages/gacha_detail.dart';
 import 'package:pjsk_viewer/utils/audio_service.dart';
+import 'package:pjsk_viewer/utils/helper.dart';
 
 class DetailBuilder {
   static Widget buildCharacterIcon(characterId) {
@@ -16,7 +16,7 @@ class DetailBuilder {
       'assets/chara_icons/chr_ts_$characterId.png',
       height: 40,
       errorBuilder:
-          (ctx, err, stack) => const Icon(Icons.broken_image, size: 40),
+          (context, err, stack) => const Icon(Icons.broken_image, size: 40),
     );
   }
 
@@ -93,11 +93,11 @@ class DetailBuilder {
       label,
       Builder(
         builder:
-            (ctx) => GestureDetector(
+            (context) => GestureDetector(
               onTap: () async {
-                final localizations = AppLocalizations.of(ctx);
+                final localizations = AppLocalizations.of(context);
                 await Clipboard.setData(ClipboardData(text: value));
-                ScaffoldMessenger.of(ctx).showSnackBar(
+                ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
                       localizations.translate('copied_to_clipboard'),
@@ -121,11 +121,11 @@ class DetailBuilder {
       label,
       Builder(
         builder:
-            (ctx) => GestureDetector(
+            (context) => GestureDetector(
               onTap: () async {
-                final localizations = AppLocalizations.of(ctx);
+                final localizations = AppLocalizations.of(context);
                 await Clipboard.setData(ClipboardData(text: value.combined));
-                ScaffoldMessenger.of(ctx).showSnackBar(
+                ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
                       localizations.translate('copied_to_clipboard'),
@@ -142,11 +142,12 @@ class DetailBuilder {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(value.japanese, textAlign: TextAlign.right),
-                        Text(
-                          value.translated,
-                          style: TextStyle(color: Colors.grey[600]),
-                          textAlign: TextAlign.right,
-                        ),
+                        if (value.japanese != value.translated)
+                          Text(
+                            value.translated,
+                            style: TextStyle(color: Colors.grey[600]),
+                            textAlign: TextAlign.right,
+                          ),
                       ],
                     ),
                   ),
@@ -189,12 +190,12 @@ class DetailBuilder {
         height: height,
         fit: fit,
         placeholder:
-            (ctx, url) => SizedBox(
+            (context, url) => SizedBox(
               height: height,
               child: const Center(child: CircularProgressIndicator()),
             ),
         errorWidget:
-            (ctx, u, e) =>
+            (context, u, e) =>
                 Text(text), // Expect 'text' to be localized by caller
       ),
     );
@@ -221,11 +222,11 @@ class DetailBuilder {
                 height: height,
                 fit: fit,
                 placeholder:
-                    (ctx, u) => SizedBox(
+                    (context, u) => SizedBox(
                       height: height,
                       child: const CircularProgressIndicator(),
                     ),
-                errorWidget: (ctx, u, e) => Text(text),
+                errorWidget: (context, u, e) => Text(text),
               );
             }).toList(),
       ),
@@ -470,14 +471,14 @@ class DetailBuilder {
           width: size,
           fit: BoxFit.contain,
           placeholder:
-              (ctx, u) => SizedBox(
+              (context, u) => SizedBox(
                 height: size,
                 width: size,
                 child: const Center(
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
               ),
-          errorWidget: (ctx, u, e) => const Icon(Icons.error, size: 50),
+          errorWidget: (context, u, e) => const Icon(Icons.error, size: 50),
         ),
         Image.asset(frame, height: size, width: size, fit: BoxFit.contain),
         Positioned(
@@ -568,7 +569,8 @@ class DetailBuilder {
               final String bundle = card['assetbundleName'] as String? ?? '';
               final String rarity = card['cardRarityType'] as String? ?? '';
               final String attribute = card['attr'] as String? ?? '';
-              final bool showTrainedImage = card['initialSpecialTrainingStatus'] == 'done';
+              final bool showTrainedImage =
+                  card['initialSpecialTrainingStatus'] == 'done';
               return buildCardThumbnail(
                 context: context,
                 assetbundleName: bundle,
@@ -820,13 +822,14 @@ class DetailBuilder {
             width: 32,
             height: 32,
             placeholder:
-                (ctx, url) => const SizedBox(
+                (context, url) => const SizedBox(
                   width: 32,
                   height: 32,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
             errorWidget:
-                (ctx, err, stack) => const Icon(Icons.error_outline, size: 32),
+                (context, err, stack) =>
+                    const Icon(Icons.error_outline, size: 32),
           ),
           const SizedBox(width: 8),
           Text('x$quantity'),
@@ -876,7 +879,7 @@ class DetailBuilder {
                       width: 32,
                       height: 32,
                       placeholder:
-                          (ctx, url) => const SizedBox(
+                          (context, url) => const SizedBox(
                             width: 32,
                             height: 32,
                             child: CircularProgressIndicator(strokeWidth: 2),
@@ -947,7 +950,7 @@ class DetailBuilder {
         ),
         const SizedBox(height: 4),
         Text(
-          theme, 
+          theme,
           style: Theme.of(context).textTheme.titleMedium,
           textAlign: TextAlign.center,
         ),
@@ -965,12 +968,12 @@ class DetailBuilder {
                       height: 60,
                       fit: BoxFit.contain,
                       placeholder:
-                          (ctx, url) => SizedBox(
+                          (context, url) => SizedBox(
                             height: 60,
                             child: Center(child: CircularProgressIndicator()),
                           ),
                       errorWidget:
-                          (ctx, err, st) =>
+                          (context, err, st) =>
                               const Icon(Icons.error_outline, size: 40),
                     ),
                   const SizedBox(height: 4),
@@ -988,12 +991,12 @@ class DetailBuilder {
                       height: 60,
                       fit: BoxFit.contain,
                       placeholder:
-                          (ctx, url) => SizedBox(
+                          (context, url) => SizedBox(
                             height: 60,
                             child: Center(child: CircularProgressIndicator()),
                           ),
                       errorWidget:
-                          (ctx, err, st) =>
+                          (context, err, st) =>
                               const Icon(Icons.error_outline, size: 40),
                     ),
                   const SizedBox(height: 4),
@@ -1003,11 +1006,131 @@ class DetailBuilder {
             ),
           ],
         ),
-        const Divider(
-          height: 8,
-          thickness: 1,
-        ),
+        const Divider(height: 8, thickness: 1),
       ],
+    );
+  }
+
+  static buildWorldBloomColumn(
+    BuildContext context,
+    int eventId,
+    List<Map<String, dynamic>> worldBlooms,
+  ) {
+    final localizations = ContentLocalizations.of(context)!;
+
+    List<Map<String, dynamic>> filteredWorldBlooms =
+        worldBlooms.where((b) => b['eventId'] == eventId).toList();
+    filteredWorldBlooms.sort(
+      (a, b) =>
+          (a['chapterStartAt'] as int).compareTo(b['chapterStartAt'] as int),
+    );
+
+    final characters =
+        filteredWorldBlooms.map((b) => b['gameCharacterId'] as int?).toList();
+
+    // local selection state
+    final isSelected = List<bool>.filled(characters.length, false);
+
+    return StatefulBuilder(
+      builder: (context, setState) {
+        int selectedIndex = isSelected.indexWhere(
+          (isSelectedItem) => isSelectedItem,
+        );
+
+        Widget chapterRow;
+        if (selectedIndex >= 0) {
+          final worldbloom = filteredWorldBlooms[selectedIndex];
+          final String startAt = formatDate(
+            worldbloom['chapterStartAt'] as int,
+          );
+          final String aggregateAt = formatDate(
+            worldbloom['aggregateAt'] as int,
+          );
+          chapterRow = Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2.0),
+            child: Column(
+              children: [
+                DetailBuilder.buildTextRow(
+                  localizations.translate('event', "startAt").translated,
+                  startAt,
+                ),
+                DetailBuilder.buildTextRow(
+                  localizations.translate('event', "closeAt").translated,
+                  aggregateAt,
+                ),
+              ],
+            ),
+          );
+        } else {
+          chapterRow = const SizedBox.shrink();
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              localizations
+                  .translate('event', 'type', innerKey: 'world_bloom')
+                  .translated,
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            buildCharacterToggleButtons(
+              characterIds: characters,
+              isSelected: isSelected,
+              onPressed: (index) {
+                setState(() {
+                  for (var i = 0; i < isSelected.length; i++) {
+                    isSelected[i] = (i == index) ? !isSelected[i] : false;
+                  }
+                });
+              },
+            ),
+            const SizedBox(height: 8),
+
+            chapterRow,
+
+            const Divider(height: 8, thickness: 1),
+          ],
+        );
+      },
+    );
+  }
+
+  static Widget buildCharacterToggleButtons({
+    required List<int?> characterIds,
+    required List<bool> isSelected,
+    required ValueChanged<int> onPressed,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final totalWidth = constraints.maxWidth * 0.95;
+        final count = characterIds.isNotEmpty ? characterIds.length : 1;
+        final buttonWidth = totalWidth / count;
+        const double buttonHeight = 40.0;
+
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: totalWidth,
+              minHeight: buttonHeight,
+            ),
+            child: ToggleButtons(
+              isSelected: isSelected,
+              onPressed: onPressed,
+              constraints: BoxConstraints(minWidth: buttonWidth, minHeight: buttonHeight,),
+              children:
+                  characterIds.map((id) {
+                    if (id == -1) return const Icon(Icons.all_inclusive, size: 32);
+                    return buildCharacterIcon(id);
+                  }).toList(),
+            ),
+          ),
+        );
+      },
     );
   }
 }

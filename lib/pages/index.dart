@@ -645,14 +645,17 @@ class _IndexPageState<T> extends State<IndexPage<T>> {
               : ListView.builder(
                 controller: widget.scrollController,
                 itemCount: _lazyLoad.itemCount,
-                itemBuilder: (ctx, idx) {
+                itemBuilder: (context, idx) {
                   if (_lazyLoad.isLoadingIndicator(idx)) {
                     return const Padding(
                       padding: EdgeInsets.all(16),
                       child: Center(child: CircularProgressIndicator()),
                     );
                   }
-                  return widget.itemBuilder(ctx, _lazyLoad.filteredItems[idx]);
+                  return widget.itemBuilder(
+                    context,
+                    _lazyLoad.filteredItems[idx],
+                  );
                 },
               ),
     );

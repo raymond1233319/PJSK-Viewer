@@ -25,14 +25,14 @@ class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   Widget _buildMenuItem(
-    BuildContext ctx,
+    BuildContext context,
     IconData icon,
     String key,
     Widget page, {
     String? innerKey,
   }) {
-    final halfWidth = MediaQuery.of(ctx).size.width / 2;
-    final localizations = ContentLocalizations.of(ctx);
+    final halfWidth = MediaQuery.of(context).size.width / 2;
+    final localizations = ContentLocalizations.of(context);
     final String title =
         innerKey != null
             ? localizations
@@ -46,8 +46,8 @@ class HomePage extends StatelessWidget {
         leading: Icon(icon),
         title: Text(title),
         onTap: () {
-          Navigator.of(ctx).pop();
-          Navigator.push(ctx, MaterialPageRoute(builder: (_) => page));
+          Navigator.of(context).pop();
+          Navigator.push(context, MaterialPageRoute(builder: (_) => page));
         },
       ),
     );
@@ -74,47 +74,47 @@ class HomePage extends StatelessWidget {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: Builder(
         builder:
-            (ctx) => FloatingActionButton(
+            (context) => FloatingActionButton(
               backgroundColor: Colors.grey.shade200,
               child: const Icon(Icons.menu),
               onPressed: () {
                 showModalBottomSheet(
-                  context: ctx,
+                  context: context,
                   builder: (_) {
                     return Wrap(
                       children: [
                         _buildMenuItem(
-                          ctx,
+                          context,
                           Icons.event,
                           'event',
                           const EventPage(),
                         ),
                         _buildMenuItem(
-                          ctx,
+                          context,
                           Icons.rectangle_outlined,
                           'card',
                           const CardIndexPage(),
                         ),
                         _buildMenuItem(
-                          ctx,
+                          context,
                           Icons.casino_outlined,
                           'gacha',
                           const GachaIndexPage(),
                         ),
                         _buildMenuItem(
-                          ctx,
+                          context,
                           Icons.album,
                           'music',
                           const MusicIndexPage(),
                         ),
                         _buildMenuItem(
-                          ctx,
+                          context,
                           Icons.show_chart,
                           'eventTracker',
                           const EventTrackerPage(),
                         ),
                         _buildMenuItem(
-                          ctx,
+                          context,
                           Icons.settings,
                           'settings',
                           const SettingsPage(),
@@ -427,7 +427,7 @@ class _LiveRankingSelectorState extends State<LiveRankingSelector> {
   Widget build(BuildContext context) {
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: _futureRanking,
-      builder: (ctx, snap) {
+      builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         } else if (snap.hasError) {
@@ -561,7 +561,7 @@ class _VersionInfoState extends State<VersionInfo> {
             showDialog(
               context: context,
               builder:
-                  (ctx) => AlertDialog(
+                  (context) => AlertDialog(
                     title: Text(
                       AppLocalizations.of(
                         context,
@@ -574,14 +574,14 @@ class _VersionInfoState extends State<VersionInfo> {
                     ),
                     actions: [
                       TextButton(
-                        onPressed: () => Navigator.of(ctx).pop(),
+                        onPressed: () => Navigator.of(context).pop(),
                         child: Text(
                           AppLocalizations.of(context).translate('later'),
                         ),
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.of(ctx).pop();
+                          Navigator.of(context).pop();
                           updateDatabase(context);
                         },
                         child: Text(

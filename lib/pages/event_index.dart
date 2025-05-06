@@ -205,7 +205,7 @@ class _EventPageState extends State<EventPage> {
           scrollController: _scrollController,
 
           // build each row
-          itemBuilder: (ctx, event) => buildEventItem(ctx, event),
+          itemBuilder: (context, event) => buildEventItem(context, event),
         );
   }
 }
