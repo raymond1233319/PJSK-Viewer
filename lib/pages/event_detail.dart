@@ -410,25 +410,27 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                 ['assets/icon_attribute_$bonusAttr.png'],
                               ),
 
-                            Text(
-                              localizations
-                                      .translate('common', "card")
-                                      .translated ??
-                                  'Card',
-                              style: Theme.of(context).textTheme.headlineSmall
-                                  ?.copyWith(fontWeight: FontWeight.bold),
-                            ),
+                            if (eventCards.isNotEmpty)
+                              Text(
+                                localizations
+                                        .translate('common', "card")
+                                        .translated ??
+                                    'Card',
+                                style: Theme.of(context).textTheme.headlineSmall
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
                             const SizedBox(height: 12),
 
                             // Event Cards
-                            DetailBuilder.buildCardThumbnailList(
-                              context,
-                              localizations
-                                      .translate('event', "eventCards")
-                                      .translated ??
-                                  "Event Cards",
-                              eventCards,
-                            ),
+                            if (eventCards.isNotEmpty)
+                              DetailBuilder.buildCardThumbnailList(
+                                context,
+                                localizations
+                                        .translate('event', "eventCards")
+                                        .translated ??
+                                    "Event Cards",
+                                eventCards,
+                              ),
 
                             // Cheerful Carnival
                             if (eventType == 'cheerful_carnival')
