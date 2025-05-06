@@ -568,7 +568,7 @@ class DetailBuilder {
               final String bundle = card['assetbundleName'] as String? ?? '';
               final String rarity = card['cardRarityType'] as String? ?? '';
               final String attribute = card['attr'] as String? ?? '';
-
+              final bool showTrainedImage = card['initialSpecialTrainingStatus'] == 'done';
               return buildCardThumbnail(
                 context: context,
                 assetbundleName: bundle,
