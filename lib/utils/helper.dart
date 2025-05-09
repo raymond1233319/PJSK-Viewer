@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
@@ -297,9 +299,9 @@ Future<void> downloadToDevice(BuildContext context, String url) async {
       final fileName = url.split('/').last;
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/$fileName');
-      final resp = await http.get(Uri.parse(url));
+      final respone = await http.get(Uri.parse(url));
       debugPrint(url);
-      await file.writeAsBytes(resp.bodyBytes);
+      await file.writeAsBytes(respone.bodyBytes);
       final params = ShareParams(files: [XFile(file.path)]);
       await SharePlus.instance.share(params);
     }
@@ -321,5 +323,51 @@ Future<void> downloadToDevice(BuildContext context, String url) async {
         ),
       ),
     );
+  }
+}
+
+Future<List<Map<String, dynamic>>> fetchEventRanking(
+  int eventId,
+  int characterId,
+) async {
+  final uri =
+      (characterId != -1)
+          ? await () async {
+            final timeResp = await http.get(
+              Uri.parse(
+                'https://api.sekai.best/event/$eventId/chapter_rankings/time?charaId=$characterId&region=jp',
+              ),
+            );
+            final times =
+                (json.decode(timeResp.body) as Map<String, dynamic>)['data']
+                    as List;
+            final ts = times.last as String;
+            return Uri.parse(
+              'https://api.sekai.best/event/$eventId/chapter_rankings?charaId=$characterId&region=jp&timestamp=$ts',
+            );
+          }()
+          : await () async {
+            final timeResp = await http.get(
+              Uri.parse(
+                'https://api.sekai.best/event/$eventId/rankings/time?region=jp',
+              ),
+            );
+            final times =
+                (json.decode(timeResp.body) as Map<String, dynamic>)['data']
+                    as List;
+            final ts = times.last as String;
+            return Uri.parse(
+              'https://api.sekai.best/event/$eventId/rankings?region=jp&timestamp=$ts',
+            );
+          }();
+  final respone = await http.get(uri);
+
+  if (respone.statusCode == 200) {
+    final jsonMap = json.decode(respone.body) as Map<String, dynamic>;
+    return (jsonMap['data']['eventRankings'] as List)
+        .map((e) => e as Map<String, dynamic>)
+        .toList();
+  } else {
+    throw Exception('Error: ${respone.statusCode}');
   }
 }

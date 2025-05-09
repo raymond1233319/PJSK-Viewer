@@ -192,22 +192,6 @@ class _SettingsPageState extends State<SettingsPage> {
                   }
                 },
               ),
-              ListTile(
-                leading: const Icon(Icons.update),
-                title: Text(l10n.translate('settings_update_db')),
-                onTap: () async {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          l10n.translate('settings_update_db_started_message'),
-                        ),
-                      ),
-                    );
-                    updateDatabase(context);
-                  }
-                },
-              ),
               // Auto‑update interval selector
               ListTile(
                 title: Text(l10n.translate('settings_auto_update_interval')),

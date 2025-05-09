@@ -115,7 +115,7 @@ class MusicDatabase {
       final vocalMap = grouped[1];
       final diffMap = grouped[2];
 
-      // 3. Update musics table with grouped auxiliary data
+      // Update musics table with grouped auxiliary data
       await db.transaction((txn) async {
         final Batch updateBatch = txn.batch();
         int updateCount = 0;

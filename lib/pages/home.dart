@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -7,8 +8,11 @@ import 'package:pjsk_viewer/i18n/app_localizations.dart';
 import 'package:pjsk_viewer/pages/card_index.dart';
 import 'package:pjsk_viewer/pages/event_tracker.dart';
 import 'package:pjsk_viewer/pages/music_index.dart';
+import 'package:pjsk_viewer/pages/mysekai_fixture_index.dart';
 import 'package:pjsk_viewer/pages/setting.dart';
 import 'package:pjsk_viewer/utils/database/database.dart';
+import 'package:pjsk_viewer/utils/database/event_database.dart';
+import 'package:pjsk_viewer/utils/detail_builder.dart';
 import 'package:pjsk_viewer/utils/helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:marquee/marquee.dart';
@@ -33,13 +37,17 @@ class HomePage extends StatelessWidget {
   }) {
     final halfWidth = MediaQuery.of(context).size.width / 2;
     final localizations = ContentLocalizations.of(context);
-    final String title =
+    final appLocalizations = AppLocalizations.of(context);
+    String title =
         innerKey != null
             ? localizations
                     ?.translate('common', key, innerKey: innerKey)
                     .translated ??
                 key
             : localizations?.translate('common', key).translated ?? key;
+    if (title == '') {
+      title = appLocalizations.translate(key);
+    }
     return SizedBox(
       width: halfWidth,
       child: ListTile(
@@ -115,6 +123,12 @@ class HomePage extends StatelessWidget {
                         ),
                         _buildMenuItem(
                           context,
+                          Icons.home,
+                          'my_sekai',
+                          const MySekaiIndexPage(),
+                        ),
+                        _buildMenuItem(
+                          context,
                           Icons.settings,
                           'settings',
                           const SettingsPage(),
@@ -187,6 +201,15 @@ class CurrentEvent extends StatelessWidget {
         } else {
           final localizations = ContentLocalizations.of(context);
           final eventData = snapshot.data;
+          final endAt = eventData?['eventJson']?['aggregateAt'];
+          final now = DateTime.now().millisecondsSinceEpoch;
+          if (endAt != null && now > endAt) {
+            return Text(
+              localizations?.translate('event', 'alreadyEnded').translated ??
+                  "Event has ended",
+              style: const TextStyle(fontSize: 20),
+            );
+          }
           final int eventId = eventData?['eventJson']?['id'];
           final eventName =
               eventData?['eventJson']?['name'] ??
@@ -200,12 +223,6 @@ class CurrentEvent extends StatelessWidget {
               eventData?['eventJson']?['assetbundleName'] ?? '';
           final bannerUrl =
               "https://storage.sekai.best/sekai-jp-assets/home/banner/$assetbundleName/$assetbundleName.webp";
-          final aggregateAt = eventData?['eventJson']?['aggregateAt'] as int?;
-          DateTime? endTime;
-          if (aggregateAt != null) {
-            endTime =
-                DateTime.fromMillisecondsSinceEpoch(aggregateAt).toLocal();
-          }
 
           return Column(
             mainAxisSize: MainAxisSize.min,
@@ -295,7 +312,7 @@ class CurrentEvent extends StatelessWidget {
               ),
 
               // Timer
-              if (endTime != null)
+              if (endAt != null)
                 Card(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -322,7 +339,9 @@ class CurrentEvent extends StatelessWidget {
                             child: TimerCountdown(
                               format:
                                   CountDownTimerFormat.daysHoursMinutesSeconds,
-                              endTime: endTime,
+                              endTime: DateTime.fromMillisecondsSinceEpoch(
+                                endAt,
+                              ),
                               onEnd:
                                   () => Text(
                                     AppLocalizations.of(
@@ -373,7 +392,7 @@ class CurrentEvent extends StatelessWidget {
                   ),
                 ),
               // Live Ranking
-              LiveRankingSelector(),
+              LiveRankingSelector(eventData: eventData),
             ],
           );
         }
@@ -383,21 +402,23 @@ class CurrentEvent extends StatelessWidget {
 }
 
 class LiveRankingSelector extends StatefulWidget {
-  const LiveRankingSelector({super.key});
+  final Map<String, dynamic>? eventData;
+  const LiveRankingSelector({super.key, required this.eventData});
   @override
   _LiveRankingSelectorState createState() => _LiveRankingSelectorState();
 }
 
 class _LiveRankingSelectorState extends State<LiveRankingSelector> {
-  late Future<List<Map<String, dynamic>>> _futureRanking;
+  late Future<List<Map<String, dynamic>>> _ranking;
   TextEditingController? _controller;
   Map<String, dynamic>? _matchedEntry;
+  int _chapterId = -1;
 
   @override
   void initState() {
     super.initState();
-    _futureRanking = _fetchLiveRanking();
-    _futureRanking.then((ranking) async {
+    _ranking = _fetchLiveRanking();
+    _ranking.then((ranking) async {
       final prefs = await SharedPreferences.getInstance();
       final int stored = prefs.getInt('live_ranking_rank') ?? 1000;
       final nearest = ranking.reduce((a, b) {
@@ -412,26 +433,34 @@ class _LiveRankingSelectorState extends State<LiveRankingSelector> {
   }
 
   Future<List<Map<String, dynamic>>> _fetchLiveRanking() async {
-    final resp = await http.get(
-      Uri.parse('https://api.sekai.best/event/live?region=jp'),
-    );
-    if (resp.statusCode == 200) {
-      final data = json.decode(resp.body);
-      return (data['data']['eventRankings'] as List)
-          .cast<Map<String, dynamic>>();
+    if (widget.eventData?['eventJson']?['eventType'] == "world_bloom") {
+      final pref = await SharedPreferences.getInstance();
+      List<dynamic> worldBlooms = json.decode(
+        pref.getString('worldBlooms') ?? '[]',
+      );
+      for (var bloom in worldBlooms) {
+        final startAt = bloom['chapterStartAt'] as int;
+        final endAt = bloom['chapterEndAt'] as int;
+        final now = DateTime.now().millisecondsSinceEpoch;
+
+        if (now >= startAt && now <= endAt) {
+          _chapterId = bloom['gameCharacterId'] as int;
+          break;
+        }
+      }
     }
-    return [];
+    return fetchEventRanking(widget.eventData?['eventId'], _chapterId);
   }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _futureRanking,
+      future: _ranking,
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         } else if (snap.hasError) {
-          return Text('Live ranking error: ${snap.error}');
+          return SizedBox.shrink();
         }
         final ranking = snap.data ?? [];
         if (ranking.isEmpty) {
@@ -447,12 +476,37 @@ class _LiveRankingSelectorState extends State<LiveRankingSelector> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    localizations!
-                        .translate('common', "eventTracker")
-                        .translated,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        localizations!
+                            .translate('common', "eventTracker")
+                            .translated,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (_chapterId != -1)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: DetailBuilder.buildSingleCharacterDisplay(
+                            _chapterId,
+                          ),
+                        ),
+                      Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.refresh),
+                        onPressed: () async {
+                          setState(() {
+                            _ranking = _fetchLiveRanking();
+                          });
+                        },
+                      ),
+                    ],
                   ),
+
                   const Divider(),
 
                   // Input row with leading '#'

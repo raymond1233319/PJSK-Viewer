@@ -60,7 +60,20 @@
   "gacha_limited": "Limitado",
   "gacha_normal": "Especial",
   "gacha_beginner": "Principiante",
-  "gacha_gift": "Pacote de Felicidade",
-  "gacha_festival": "Festival Limitado",
-  "gacha_birthday": "Aniversário"
+  "gacha_gift": "Pacote de Felicidade",  "gacha_festival": "Festival Limitado",
+  "gacha_birthday": "Aniversário",
+  "my_sekai": "O Meu Mundo",
+  "mysekai_fixture": "Acessório",
+  "exchange": "Troca",
+  "size": "Tamanho",
+  "genre": "Género",
+  "sub_genre": "Subgénero",
+  "tag": "Etiquetas",
+  "cost": "Custo",  "is_enable_sketch": "Pode ser esboçado",
+  "is_obtained_by_convert": "Pode ser obtido por conversão",
+  "is_asssembled": "Pode ser montado",
+  "is_disassembled": "Pode ser desmontado",
+  "limit": "Limite",
+  "yes": "Sim",
+  "no": "Não"
 }

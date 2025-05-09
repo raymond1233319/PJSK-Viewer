@@ -57,6 +57,19 @@
   "interval_days_1": "1 jour",
   "interval_days_plural": "%s jours",
   "button_apply": "Appliquer",
-  "loading": "Chargement...",
-  "train_cost": "Matériaux requis pour l'entraînement"
+  "loading": "Chargement...",  "train_cost": "Matériaux requis pour l'entraînement",
+  "my_sekai": "Mon Monde",
+  "mysekai_fixture": "Accessoire",
+  "exchange": "Échange",
+  "size": "Taille",
+  "genre": "Genre",
+  "sub_genre": "Sous-genre",
+  "tag": "Tags",
+  "cost": "Coût",  "is_enable_sketch": "Peut être esquissé",
+  "is_obtained_by_convert": "Peut être obtenu par conversion",
+  "is_asssembled": "Peut être assemblé",
+  "is_disassembled": "Peut être désassemblé",
+  "limit": "Limite",
+  "yes": "Oui",
+  "no": "Non"
 }

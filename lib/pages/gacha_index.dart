@@ -7,7 +7,6 @@ import 'package:pjsk_viewer/pages/gacha_detail.dart';
 import 'package:pjsk_viewer/pages/index.dart';
 import 'package:pjsk_viewer/utils/database/gacha_database.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
-import 'package:pjsk_viewer/utils/helper.dart';
 
 class GachaIndexPage extends StatefulWidget {
   const GachaIndexPage({super.key});

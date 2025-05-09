@@ -27,7 +27,9 @@ class EventDatabase {
           bonusCharacter TEXT,
           bonusAttr TEXT,
           cards TEXT,
-          eventStory TEXT
+          eventStory TEXT,
+          eventExchangeSummaries TEXT,
+          eventItems TEXT
         )
       ''');
   }
@@ -37,6 +39,8 @@ class EventDatabase {
     final List<dynamic> eventsList,
     final List<dynamic> bonusList,
     final List<dynamic> eventStoryList,
+    final List<dynamic> eventExchangeSummaries,
+    final List<dynamic> eventItemsList,
     String newVersionHash,
   ) async {
     int localEventId = 164;
@@ -94,126 +98,199 @@ class EventDatabase {
         }
       });
 
-      await db.transaction((txn) async {
-        final Batch insertBatch = txn.batch();
-        int processedCount = 0;
-        for (final e in eventStoryList) {
-          if (e is Map<String, dynamic>) {
-            final int eventId = e['id'] as int? ?? 0;
-            if (eventId <= latestEventId) continue;
+      await Future.wait([
+        batchUpdateEvents(
+          db: db,
+          items: eventStoryList,
+          column: 'eventStory',
+          latestEventId: latestEventId,
+        ),
+        batchUpdateEvents(
+          db: db,
+          items: eventExchangeSummaries,
+          column: 'eventExchangeSummaries',
+          latestEventId: latestEventId,
+        ),
+        buildEventItemAssetbundleMap(eventItemsList),
+        processEventBonuses(
+          db: db,
+          bonusList: bonusList,
+          localEventId: localEventId,
+          latestEventId: latestEventId,
+        ),
+      ]);
 
-            insertBatch.update(
-              'events',
-              {'eventStory': json.encode(e)},
-              where: 'id = ?',
-              whereArgs: [eventId],
-            );
-            processedCount++;
-            if (processedCount % 500 == 0) {
-              await insertBatch.commit(noResult: true);
-            }
-          }
-        }
-        if (processedCount > 0) {
-          await insertBatch.commit(noResult: true);
-        }
-      });
-
-      await db.transaction((txn) async {
-        final Map<int, List<int>> bonusCharacterMap = {};
-        final Map<int, String> bonusAttrMap = {}; // Store attributes separately
-
-        // Group bonuses by eventId from the decoded bonusList
-        for (final bonus in bonusList) {
-          if (bonus is Map<String, dynamic>) {
-            final int eventId = bonus["eventId"] as int? ?? 0;
-            // Process only bonuses for *newly added* events
-            if (eventId <= localEventId || eventId <= latestEventId) continue;
-
-            final bool hasCharacter = bonus["gameCharacterUnitId"] != null;
-            final bool hasAttr = bonus["cardAttr"] != null;
-
-            if (hasAttr && !hasCharacter) {
-              bonusAttrMap[eventId] = bonus["cardAttr"] as String;
-            } else if (hasCharacter && !hasAttr) {
-              bonusCharacterMap
-                  .putIfAbsent(eventId, () => <int>[])
-                  .add(bonus["gameCharacterUnitId"] as int);
-            }
-          }
-        }
-
-        final Batch updateBatch = txn.batch();
-
-        // Update events with bonus attributes and characters
-        for (final entry in bonusAttrMap.entries) {
-          updateBatch.update(
-            'events',
-            {'bonusAttr': entry.value},
-            where: 'id = ?',
-            whereArgs: [entry.key],
-          );
-        }
-        for (final entry in bonusCharacterMap.entries) {
-          updateBatch.update(
-            'events',
-            {'bonusCharacter': json.encode(entry.value)},
-            where: 'id = ?',
-            whereArgs: [entry.key],
-          );
-        }
-
-        // ─── Apply local overrides from events.json
-        try {
-          final String jsonStr = await rootBundle.loadString(
-            'lib/utils/database/events.json',
-          );
-          final List<dynamic> localEvents =
-              json.decode(jsonStr) as List<dynamic>;
-
-          for (final e in localEvents) {
-            if (e['id'] <= latestEventId) continue;
-            updateBatch.update(
-              'events',
-              {
-                'bonusAttr': e['bonusAttr'] as String? ?? '',
-                'bonusCharacter': e['bonusCharacter'],
-                'unit': e['unit'] as String? ?? '',
-              },
-              where: 'id = ?',
-              whereArgs: [e['id'] as int],
-            );
-          }
-        } catch (e) {
-          return ('Error applying local events.json overrides: $e');
-        }
-
-        await updateBatch.commit();
-      });
-
-      /* ─── Log the database contents for new events only ─────────────────────
-      final List<Map<String, dynamic>> rows = await db.query(
-        'events',
-        columns: ['id', 'bonusAttr', 'bonusCharacter', 'unit', 'cards'],
-        where: 'id > ?',
-        whereArgs: [localEventId],
-      );
-      final List<Map<String, dynamic>> logData = rows.map((row) {
-        return {
-          'id': row['id'],
-          'bonusAttr': row['bonusAttr'],
-          'bonusCharacter': row['bonusCharacter'] as String? ?? '',
-          'unit': row['unit'],
-        };
-      }).toList();
-      developer.log(json.encode(logData), name: 'EventDatabaseSummary');
-      ─────────────────────────────────────────────────────────────────────── */
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('events_version', newVersionHash);
       return ('Events processed successfully (version $newVersionHash)!');
     } catch (e) {
       return ('Error processing event data: $e');
     }
+  }
+
+  static Future<int> batchUpdateEvents<T>({
+    required Database db,
+    required List<dynamic> items,
+    required String column,
+    required int latestEventId,
+  }) async {
+    int processedEventIdsCount = 0;
+
+    // Group items by eventId
+    final Map<int, List<Map<String, dynamic>>> groupedItems = {};
+    for (final item in items) {
+      if (item is Map<String, dynamic>) {
+        final int eventId = item['eventId'] as int? ?? 0;
+        // Skip events that are not new
+        if (eventId <= latestEventId) continue;
+
+        groupedItems.putIfAbsent(eventId, () => []).add(item);
+      }
+    }
+
+    if (groupedItems.isEmpty) {
+      return 0;
+    }
+
+    await db.transaction((txn) async {
+      Batch batch = txn.batch();
+
+      for (final entry in groupedItems.entries) {
+        final int eventId = entry.key;
+        final List<Map<String, dynamic>> eventSpecificItems = entry.value;
+
+        if (eventSpecificItems.isEmpty) continue;
+
+        Object? valueToEncode;
+        if (eventSpecificItems.length == 1) {
+          // If only one item for this eventId, encode it directly
+          valueToEncode = eventSpecificItems.first;
+        } else {
+          // If multiple items, encode the list of items
+          valueToEncode = eventSpecificItems;
+        }
+
+        batch.update(
+          'events',
+          {
+            column: json.encode(valueToEncode),
+          }, // Encode the single item or the list
+          where: 'id = ?',
+          whereArgs: [eventId],
+        );
+        processedEventIdsCount++;
+      }
+      await batch.commit(noResult: true);
+    });
+
+    return processedEventIdsCount; // Returns the number of unique eventIds processed
+  }
+
+  /// Process event bonus data (attributes and characters) and apply local overrides
+  static Future<void> processEventBonuses({
+    required Database db,
+    required List<dynamic> bonusList,
+    required int localEventId,
+    required int latestEventId,
+  }) async {
+    await db.transaction((txn) async {
+      final Map<int, List<int>> bonusCharacterMap = {};
+      final Map<int, String> bonusAttrMap = {}; // Store attributes separately
+
+      // Group bonuses by eventId from the decoded bonusList
+      for (final bonus in bonusList) {
+        if (bonus is Map<String, dynamic>) {
+          final int eventId = bonus["eventId"] as int? ?? 0;
+          // Process only bonuses for *newly added* events
+          if (eventId <= localEventId || eventId <= latestEventId) continue;
+
+          final bool hasCharacter = bonus["gameCharacterUnitId"] != null;
+          final bool hasAttr = bonus["cardAttr"] != null;
+
+          if (hasAttr && !hasCharacter) {
+            bonusAttrMap[eventId] = bonus["cardAttr"] as String;
+          } else if (hasCharacter && !hasAttr) {
+            bonusCharacterMap
+                .putIfAbsent(eventId, () => <int>[])
+                .add(bonus["gameCharacterUnitId"] as int);
+          }
+        }
+      }
+
+      final Batch updateBatch = txn.batch();
+
+      // Update events with bonus attributes and characters
+      for (final entry in bonusAttrMap.entries) {
+        updateBatch.update(
+          'events',
+          {'bonusAttr': entry.value},
+          where: 'id = ?',
+          whereArgs: [entry.key],
+        );
+      }
+      for (final entry in bonusCharacterMap.entries) {
+        updateBatch.update(
+          'events',
+          {'bonusCharacter': json.encode(entry.value)},
+          where: 'id = ?',
+          whereArgs: [entry.key],
+        );
+      }
+
+      final String jsonStr = await rootBundle.loadString(
+        'lib/utils/database/events.json',
+      );
+      final List<dynamic> localEvents = json.decode(jsonStr) as List<dynamic>;
+
+      for (final e in localEvents) {
+        if (e['id'] <= latestEventId) continue;
+        updateBatch.update(
+          'events',
+          {
+            'bonusAttr': e['bonusAttr'] as String? ?? '',
+            'bonusCharacter': e['bonusCharacter'],
+            'unit': e['unit'] as String? ?? '',
+          },
+          where: 'id = ?',
+          whereArgs: [e['id'] as int],
+        );
+      }
+
+      await updateBatch.commit();
+    });
+  }
+
+  /// Build a map from event‐item ID → assetbundleName and store in SharedPreferences.
+  static Future<void> buildEventItemAssetbundleMap(
+    List<dynamic> eventItemsList,
+  ) async {
+    final Map<String, String> idToAsset = {};
+    for (final eventItem in eventItemsList) {
+      final int id = eventItem['id'] as int? ?? 0;
+      final String assetName = eventItem['assetbundleName'] as String? ?? '';
+      if (id > 0 && assetName.isNotEmpty) {
+        idToAsset[id.toString()] = assetName;
+      }
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('eventItemAssetbundleMap', json.encode(idToAsset));
+  }
+
+  /// Retrieve cached map of event-item ID → assetbundleName.
+  static Future<Map<int, String>> getEventItemAssetbundleMap() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = prefs.getString('eventItemAssetbundleMap') ?? '{}';
+    final Map<String, dynamic> decoded =
+        json.decode(jsonStr) as Map<String, dynamic>;
+    final Map<int, String> result = {};
+    decoded.forEach((key, value) {
+      final id = int.tryParse(key);
+      if (id != null && value is String) {
+        result[id] = value;
+      }
+    });
+    return result;
   }
 
   /// Returns one event with its full card details.

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -74,16 +75,7 @@ class DetailBuilder {
   static Widget buildDetailRowWithWidgets(String label, List<Widget> widgets) {
     return buildDetailRow(
       label,
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            const SizedBox(height: 4),
-            Wrap(spacing: 8.0, runSpacing: 4.0, children: widgets),
-          ],
-        ),
-      ),
+      Wrap(spacing: 8.0, runSpacing: 4.0, children: widgets),
     );
   }
 
@@ -161,16 +153,11 @@ class DetailBuilder {
 
   /// Row with a list of Image assets
   static Widget buildDetailRowWithAsset(String label, List<String> assetPaths) {
-    return buildDetailRow(
+    return buildDetailRowWithWidgets(
       label,
-      Wrap(
-        spacing: 8.0,
-        runSpacing: 8.0,
-        children:
-            assetPaths.map((path) {
-              return Image.asset(path, fit: BoxFit.contain, height: 40);
-            }).toList(),
-      ),
+      assetPaths.map((path) {
+        return Image.asset(path, fit: BoxFit.contain, height: 40);
+      }).toList(),
     );
   }
 
@@ -209,150 +196,138 @@ class DetailBuilder {
     double height = 40.0,
     BoxFit fit = BoxFit.contain,
   }) {
-    return buildDetailRow(
+    return buildDetailRowWithWidgets(
       label,
-      Wrap(
-        spacing: 8.0,
-        runSpacing: 8.0,
-        alignment: WrapAlignment.end,
-        children:
-            imageUrls.map((url) {
-              return CachedNetworkImage(
-                imageUrl: url,
+      imageUrls.map((url) {
+        return CachedNetworkImage(
+          imageUrl: url,
+          height: height,
+          fit: fit,
+          placeholder:
+              (context, u) => SizedBox(
                 height: height,
-                fit: fit,
-                placeholder:
-                    (context, u) => SizedBox(
-                      height: height,
-                      child: const CircularProgressIndicator(),
-                    ),
-                errorWidget: (context, u, e) => Text(text),
-              );
-            }).toList(),
-      ),
+                child: const CircularProgressIndicator(),
+              ),
+          errorWidget: (context, u, e) => Text(text),
+        );
+      }).toList(),
     );
   }
 
   /// Specific row handling bonus character data
-  static Widget buildBonusCharacterWidget(String label, String jsonString) {
-    try {
-      final dynamic decoded = json.decode(jsonString);
-      final List<int> items =
-          (decoded is List)
-              ? decoded
-                  .map(
-                    (item) => item is int ? item : int.parse(item.toString()),
-                  )
-                  .toList()
-              : <int>[];
-      if (items.isEmpty) {
-        return const SizedBox.shrink();
+  static Widget buildCharactersWidget(String label, String jsonString) {
+    final dynamic decoded = json.decode(jsonString);
+    final List<int> items =
+        (decoded is List)
+            ? decoded
+                .map((item) => item is int ? item : int.parse(item.toString()))
+                .toList()
+            : <int>[];
+            
+    if (items.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return buildDetailRowWithWidgets(
+      label,
+      items.map((charId) => buildSingleCharacterDisplay(charId)).toList(),
+    );
+  }
+
+  static Widget buildSingleCharacterDisplay(int charId) {
+    final Map<int, Map<String, dynamic>> characterUnitMap = {
+      // Miku
+      27: {"gameCharacterId": "21_2", "unit": "light_sound"},
+      28: {"gameCharacterId": "21_3", "unit": "idol"},
+      29: {"gameCharacterId": "21_4", "unit": "street"},
+      30: {"gameCharacterId": "21_5", "unit": "theme_park"},
+      31: {"gameCharacterId": "21_6", "unit": "school_refusal"},
+      // Rin
+      32: {"gameCharacterId": 22, "unit": "light_sound"},
+      33: {"gameCharacterId": 22, "unit": "idol"},
+      34: {"gameCharacterId": 22, "unit": "street"},
+      35: {"gameCharacterId": 22, "unit": "theme_park"},
+      36: {"gameCharacterId": 22, "unit": "school_refusal"},
+      // Len
+      37: {"gameCharacterId": 23, "unit": "light_sound"},
+      38: {"gameCharacterId": 23, "unit": "idol"},
+      39: {"gameCharacterId": 23, "unit": "street"},
+      40: {"gameCharacterId": 23, "unit": "theme_park"},
+      41: {"gameCharacterId": 23, "unit": "school_refusal"},
+      // Luka
+      42: {"gameCharacterId": 24, "unit": "light_sound"},
+      43: {"gameCharacterId": 24, "unit": "idol"},
+      44: {"gameCharacterId": 24, "unit": "street"},
+      45: {"gameCharacterId": 24, "unit": "theme_park"},
+      46: {"gameCharacterId": 24, "unit": "school_refusal"},
+      // Meiko
+      47: {"gameCharacterId": 25, "unit": "light_sound"},
+      48: {"gameCharacterId": 25, "unit": "idol"},
+      49: {"gameCharacterId": 25, "unit": "street"},
+      50: {"gameCharacterId": 25, "unit": "theme_park"},
+      51: {"gameCharacterId": 25, "unit": "school_refusal"},
+      // Kaito
+      52: {"gameCharacterId": 26, "unit": "light_sound"},
+      53: {"gameCharacterId": 26, "unit": "idol"},
+      54: {"gameCharacterId": 26, "unit": "street"},
+      55: {"gameCharacterId": 26, "unit": "theme_park"},
+      56: {"gameCharacterId": 26, "unit": "school_refusal"},
+    };
+
+    String assetPath;
+    String? overlayImagePath;
+
+    final dynamic mappedGameCharacterId =
+        characterUnitMap[charId]?["gameCharacterId"];
+    final String effectiveCharIdString =
+        (mappedGameCharacterId ?? charId).toString();
+    assetPath = 'assets/chara_icons/chr_ts_$effectiveCharIdString.png';
+
+    if (charId > 31) {
+      final realCharId = characterUnitMap[charId]?["gameCharacterId"] ?? charId;
+      assetPath = 'assets/chara_icons/chr_ts_$realCharId.png';
+      final unit = characterUnitMap[charId]?["unit"];
+      if (unit != null) {
+        overlayImagePath = 'assets/common/logo_mini/unit_ts_$unit.png';
       }
+    } else {
+      final realCharId = characterUnitMap[charId]?["gameCharacterId"] ?? charId;
+      assetPath = 'assets/chara_icons/chr_ts_$realCharId.png';
+    }
 
-      final Map<int, Map<String, dynamic>> characterUnitMap = {
-        // Miku
-        27: {"gameCharacterId": "21_2", "unit": "light_sound"},
-        28: {"gameCharacterId": "21_3", "unit": "idol"},
-        29: {"gameCharacterId": "21_4", "unit": "street"},
-        30: {"gameCharacterId": "21_5", "unit": "theme_park"},
-        31: {"gameCharacterId": "21_6", "unit": "school_refusal"},
-        // Rin
-        32: {"gameCharacterId": 22, "unit": "light_sound"},
-        33: {"gameCharacterId": 22, "unit": "idol"},
-        34: {"gameCharacterId": 22, "unit": "street"},
-        35: {"gameCharacterId": 22, "unit": "theme_park"},
-        36: {"gameCharacterId": 22, "unit": "school_refusal"},
-        // Len
-        37: {"gameCharacterId": 23, "unit": "light_sound"},
-        38: {"gameCharacterId": 23, "unit": "idol"},
-        39: {"gameCharacterId": 23, "unit": "street"},
-        40: {"gameCharacterId": 23, "unit": "theme_park"},
-        41: {"gameCharacterId": 23, "unit": "school_refusal"},
-        // Luka
-        42: {"gameCharacterId": 24, "unit": "light_sound"},
-        43: {"gameCharacterId": 24, "unit": "idol"},
-        44: {"gameCharacterId": 24, "unit": "street"},
-        45: {"gameCharacterId": 24, "unit": "theme_park"},
-        46: {"gameCharacterId": 24, "unit": "school_refusal"},
-        // Meiko
-        47: {"gameCharacterId": 25, "unit": "light_sound"},
-        48: {"gameCharacterId": 25, "unit": "idol"},
-        49: {"gameCharacterId": 25, "unit": "street"},
-        50: {"gameCharacterId": 25, "unit": "theme_park"},
-        51: {"gameCharacterId": 25, "unit": "school_refusal"},
-        // Kaito
-        52: {"gameCharacterId": 26, "unit": "light_sound"},
-        53: {"gameCharacterId": 26, "unit": "idol"},
-        54: {"gameCharacterId": 26, "unit": "street"},
-        55: {"gameCharacterId": 26, "unit": "theme_park"},
-        56: {"gameCharacterId": 26, "unit": "school_refusal"},
-      };
+    Widget characterIcon = Image.asset(
+      assetPath,
+      fit: BoxFit.contain,
+      height: 40,
+      errorBuilder:
+          (context, error, stackTrace) =>
+              const Icon(Icons.broken_image, size: 40),
+    );
 
-      return buildDetailRow(
-        label,
-        Wrap(
-          spacing: 8.0,
-          runSpacing: 8.0,
-          alignment: WrapAlignment.end,
-          children:
-              items.map((charId) {
-                String assetPath;
-                String? overlayImagePath;
-
-                if (charId > 31) {
-                  final realCharId =
-                      characterUnitMap[charId]?["gameCharacterId"] ?? charId;
-                  assetPath = 'assets/chara_icons/chr_ts_$realCharId.png';
-                  final unit = characterUnitMap[charId]?["unit"];
-                  if (unit != null) {
-                    overlayImagePath =
-                        'assets/common/logo_mini/unit_ts_$unit.png';
-                  }
-                } else {
-                  final realCharId =
-                      characterUnitMap[charId]?["gameCharacterId"] ?? charId;
-                  assetPath = 'assets/chara_icons/chr_ts_$realCharId.png';
-                }
-
-                Widget characterIcon = Image.asset(
-                  assetPath,
-                  fit: BoxFit.contain,
-                  height: 40,
-                  errorBuilder:
-                      (context, error, stackTrace) =>
-                          const Icon(Icons.broken_image, size: 40),
-                );
-
-                if (overlayImagePath != null) {
-                  return Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      characterIcon,
-                      Positioned(
-                        top: -5,
-                        right: -5,
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: Image.asset(
-                            overlayImagePath,
-                            fit: BoxFit.contain,
-                            errorBuilder:
-                                (context, error, stackTrace) =>
-                                    const Icon(Icons.error_outline, size: 15),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                } else {
-                  return characterIcon;
-                }
-              }).toList(),
-        ),
+    if (overlayImagePath != null) {
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          characterIcon,
+          Positioned(
+            top: -5,
+            right: -5,
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: Image.asset(
+                overlayImagePath,
+                fit: BoxFit.contain,
+                errorBuilder:
+                    (context, error, stackTrace) =>
+                        const Icon(Icons.error_outline, size: 15),
+              ),
+            ),
+          ),
+        ],
       );
-    } catch (e) {
-      return buildTextRow(label, e.toString());
+    } else {
+      return characterIcon;
     }
   }
 
@@ -421,20 +396,7 @@ class DetailBuilder {
       TextButton(
         child: Text(applocalizations.translate('view')),
         onPressed: () {
-          showDialog(
-            context: context,
-            builder:
-                (_) => AlertDialog(
-                  title: Text(label),
-                  content: SingleChildScrollView(child: Text(content)),
-                  actions: [
-                    TextButton(
-                      child: Text(applocalizations.translate('close')),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ],
-                ),
-          );
+          popUpDialog(context, SingleChildScrollView(child: Text(content)));
         },
       ),
     );
@@ -786,7 +748,7 @@ class DetailBuilder {
         ),
         child: GestureDetector(
           onTap: () {
-            _showResourceCostsModal(context, episode);
+            showResourceCostsModal(context, episode);
           },
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -838,79 +800,66 @@ class DetailBuilder {
     );
   }
 
-  // Helper function to show the modal
-  static void _showResourceCostsModal(
+  static void showResourceCostsModal(
     BuildContext context,
     Map<String, dynamic> episode,
   ) {
     final localizations = ContentLocalizations.of(context)!;
     List costs = episode['costs'] as List;
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  localizations.translate('common', 'releaseCosts').translated,
-                  style: const TextStyle(
-                    fontSize: 16.0, // Adjust font size as needed
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                ...costs.map<Widget>(
-                  (cost) => buildResourceItem(cost as Map<String, dynamic>),
-                ),
-                Text(
-                  localizations.translate('common', 'rewards').translated,
-                  style: const TextStyle(
-                    fontSize: 16.0, // Adjust font size as needed
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Row(
-                  children: [
-                    CachedNetworkImage(
-                      imageUrl:
-                          'https://storage.sekai.best/sekai-jp-assets/thumbnail/common_material/jewel.webp',
-                      width: 32,
-                      height: 32,
-                      placeholder:
-                          (context, url) => const SizedBox(
-                            width: 32,
-                            height: 32,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                      errorWidget:
-                          (context, error, stackTrace) =>
-                              const Icon(Icons.error_outline, size: 32),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'x${episode['cardEpisodePartType'] == 'first_part' ? 25 : 50}',
-                    ),
-                  ],
-                ),
-              ],
+    popUpDialog(
+      context,
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            localizations.translate('common', 'releaseCosts').translated,
+            style: const TextStyle(
+              fontSize: 16.0, // Adjust font size as needed
+              fontWeight: FontWeight.bold,
             ),
           ),
-          actions: <Widget>[
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+          ...costs.map<Widget>(
+            (cost) => buildResourceItem(cost as Map<String, dynamic>),
+          ),
+          Text(
+            localizations.translate('common', 'rewards').translated,
+            style: const TextStyle(
+              fontSize: 16.0, // Adjust font size as needed
+              fontWeight: FontWeight.bold,
             ),
-          ],
-        );
-      },
+          ),
+          Row(
+            children: [
+              CachedNetworkImage(
+                imageUrl:
+                    'https://storage.sekai.best/sekai-jp-assets/thumbnail/common_material/jewel.webp',
+                width: 32,
+                height: 32,
+                placeholder:
+                    (context, url) => const SizedBox(
+                      width: 32,
+                      height: 32,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                errorWidget:
+                    (context, error, stackTrace) =>
+                        const Icon(Icons.error_outline, size: 32),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'x${episode['cardEpisodePartType'] == 'first_part' ? 25 : 50}',
+              ),
+            ],
+          ),
+        ],
+      ),
+      height: 300,
+      width: 100,
     );
   }
 
-  static buildCheerfulCarnivalColumn(
+  static Widget buildCheerfulCarnivalColumn(
     context,
     cheerfulCarnivalTeams,
     cheerfulCarnivalSummaries,
@@ -1011,7 +960,7 @@ class DetailBuilder {
     );
   }
 
-  static buildWorldBloomColumn(
+  static Widget buildWorldBloomColumn(
     BuildContext context,
     int eventId,
     List<Map<String, dynamic>> worldBlooms,
@@ -1121,16 +1070,281 @@ class DetailBuilder {
             child: ToggleButtons(
               isSelected: isSelected,
               onPressed: onPressed,
-              constraints: BoxConstraints(minWidth: buttonWidth, minHeight: buttonHeight,),
+              constraints: BoxConstraints(
+                minWidth: buttonWidth,
+                minHeight: buttonHeight,
+              ),
               children:
                   characterIds.map((id) {
-                    if (id == -1) return const Icon(Icons.all_inclusive, size: 32);
+                    if (id == -1)
+                      return const Icon(Icons.all_inclusive, size: 32);
                     return buildCharacterIcon(id);
                   }).toList(),
             ),
           ),
         );
       },
+    );
+  }
+
+  static Widget buildEventExchangeList(
+    BuildContext context,
+    List<Map<String, dynamic>> eventExchanges,
+    List<Map<String, dynamic>> eventExchangeResourceBoxDetails,
+    List<Map<String, dynamic>> eventCards,
+    Map<int, String> eventItemAssetMap,
+    List<Map<String, dynamic>> mySekaiMaterials,
+  ) {
+    if (eventExchanges.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final appLocalizations = AppLocalizations.of(context);
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: eventExchanges.length,
+      itemBuilder: (context, index) {
+        final exchange = eventExchanges[index];
+
+        // Get the cost details
+        final cost =
+            exchange['eventExchangeCost'] as Map<String, dynamic>? ?? {};
+
+        // build the cost widget
+        Widget costWidget = buildResourceIcon(
+          context: context,
+          resourceType: cost['resourceType'],
+          resourceId: cost['resourceId'],
+          eventItemAssetMap: eventItemAssetMap,
+          size: 24.0,
+        );
+
+        // Get the resource box details
+        final int resourceBoxId = exchange['resourceBoxId'] as int? ?? 0;
+        Map<String, dynamic>? resourceBoxDetail;
+        try {
+          final Map<String, dynamic> resourceBox =
+              eventExchangeResourceBoxDetails.firstWhere(
+                (detail) => detail['id'] == resourceBoxId,
+              );
+          resourceBoxDetail = json.decode(resourceBox['details']).first;
+        } catch (e) {
+          resourceBoxDetail = null;
+        }
+
+        // build the exchange item widget
+        final String boxResourceType = resourceBoxDetail?['resourceType'] ?? '';
+        final int boxResourceId = resourceBoxDetail?['resourceId'] ?? -1;
+        final int boxResourceQuantity =
+            resourceBoxDetail?['resourceQuantity'] ?? 0;
+
+        Widget leadingWidget = buildResourceIcon(
+          context: context,
+          resourceType: boxResourceType,
+          resourceId: boxResourceId,
+          quantity: boxResourceQuantity,
+          cards: eventCards,
+          eventItemAssetMap: eventItemAssetMap,
+          mySekaiMaterials: mySekaiMaterials,
+        );
+
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+          child: ListTile(
+            leading: leadingWidget,
+            title: Row(
+              children: [
+                Text('${appLocalizations.translate('cost')}: '),
+                costWidget,
+                Text(' x${cost['resourceQuantity']}'),
+              ],
+            ),
+            subtitle:
+                exchange['exchangeLimit'] != null
+                    ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${appLocalizations.translate('limit')}: ${exchange['exchangeLimit']}',
+                        ),
+                      ],
+                    )
+                    : const SizedBox.shrink(),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Returns a Widget for a resource icon based on its type and ID.
+  static Widget buildResourceIcon({
+    required BuildContext context,
+    required String resourceType,
+    required int resourceId,
+    List<Map<String, dynamic>> cards = const [],
+    Map<int, String> eventItemAssetMap = const {},
+    List<Map<String, dynamic>> mySekaiMaterials = const [],
+    int quantity = 1,
+    double size = 60,
+  }) {
+    Widget icon;
+    switch (resourceType) {
+      case 'card':
+        final card = cards.firstWhere(
+          (card) => card['id'] == resourceId,
+          orElse: () => {},
+        );
+        icon = buildCardThumbnail(
+          context: context,
+          assetbundleName: card['assetbundleName'] as String? ?? '',
+          rarity: card['cardRarityType'] as String? ?? '',
+          attribute: card['attr'] as String? ?? '',
+          size: size,
+          cardId: resourceId,
+          isJumpToCardPage: true,
+        );
+        break;
+
+      case 'practice_ticket':
+      case 'skill_practice_ticket':
+        final url =
+            'https://storage.sekai.best/sekai-jp-assets/thumbnail/$resourceType/ticket$resourceId.webp';
+        icon = buildImageWithQuantityOverlay(url, size, quantity);
+        break;
+
+      case 'event_item':
+        final itemAssetbundleName = eventItemAssetMap[resourceId] ?? '';
+        final url =
+            'https://storage.sekai.best/sekai-jp-assets/thumbnail/common_event/$itemAssetbundleName/icon_eventbadge_1.webp';
+        icon = buildImageWithQuantityOverlay(url, size, quantity);
+        break;
+
+      case 'mysekai_material':
+        final material = mySekaiMaterials.firstWhere(
+          (material) => material['id'] == resourceId,
+          orElse: () => {},
+        );
+        final iconAssetbundleName = material['iconAssetbundleName'] as String?;
+        final url =
+            'https://storage.sekai.best/sekai-jp-assets/mysekai/thumbnail/material/$iconAssetbundleName.webp';
+        icon = buildImageWithQuantityOverlay(url, size, quantity);
+        break;
+
+      default:
+        final url =
+            resourceId != -1
+                ? 'https://storage.sekai.best/sekai-jp-assets/thumbnail/$resourceType/$resourceType$resourceId.webp'
+                : 'https://storage.sekai.best/sekai-jp-assets/thumbnail/common_material/$resourceType.webp';
+        icon = buildImageWithQuantityOverlay(url, size, quantity);
+    }
+    return icon;
+  }
+
+  static Widget buildImageWithQuantityOverlay(
+    String url,
+    double size,
+    int quantity,
+  ) {
+    return Stack(
+      children: [
+        CachedNetworkImage(
+          imageUrl: url,
+          width: size,
+          height: size,
+          fit: BoxFit.contain,
+          placeholder:
+              (_, __) => SizedBox(
+                width: size,
+                height: size,
+                child: const CircularProgressIndicator(strokeWidth: 2),
+              ),
+          errorWidget: (_, __, ___) => Icon(Icons.broken_image, size: size),
+        ),
+        if (quantity > 1)
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              color: Colors.black54,
+              child: Text(
+                'x$quantity',
+                style: const TextStyle(color: Colors.white, fontSize: 10),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// Builds a wrap of texts each enclosed in a rounded‐rectangle background.
+  static Widget buildTextList(
+    String label,
+    List<String> texts, {
+    Color backgroundColor = Colors.blueGrey,
+    Color textColor = Colors.white,
+    EdgeInsets padding = const EdgeInsets.symmetric(
+      horizontal: 8.0,
+      vertical: 4.0,
+    ),
+    double radius = 8.0,
+  }) {
+    return buildDetailRowWithWidgets(
+      label,
+      texts.map((text) {
+        return Container(
+          padding: padding,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(radius),
+          ),
+          child: Text(text, style: TextStyle(color: textColor)),
+        );
+      }).toList(),
+    );
+  }
+
+  static Widget buildBoolRow(String label, bool flag) {
+    return buildDetailRow(
+      label,
+      Icon(
+        flag ? Icons.check_circle : Icons.cancel,
+        color: flag ? Colors.green : Colors.red,
+      ),
+    );
+  }
+
+  static void popUpDialog(
+    context,
+    content, {
+    double height = 600,
+    double width = 800,
+  }) {
+    final localizations = ContentLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder:
+          (_) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              constraints: BoxConstraints(maxWidth: width, maxHeight: height),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Expanded(child: SingleChildScrollView(child: content)),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(
+                      localizations.translate('common', 'close').translated,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
     );
   }
 }

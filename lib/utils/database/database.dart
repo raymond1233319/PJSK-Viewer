@@ -11,6 +11,8 @@ import 'character_database.dart';
 import 'event_database.dart';
 import 'gacha_database.dart';
 import 'music_database.dart';
+import 'my_sekai_database.dart';
+import 'resource_boxes_database.dart';
 
 // Helper class to hold fetched data and its hash
 class FetchedData {
@@ -54,6 +56,24 @@ Future<Map<String, String>> buildFetchUrls() async {
     'cheerfulCarnivalTeams': "$baseUrl/cheerfulCarnivalTeams.json",
     'cheerfulCarnivalSummaries': "$baseUrl/cheerfulCarnivalSummaries.json",
     'worldBlooms': "$baseUrl/worldBlooms.json",
+    'eventExchangeSummaries': "$baseUrl/eventExchangeSummaries.json",
+    'eventItems': "$baseUrl/eventItems.json",
+    'resourceBoxes': "$baseUrl/resourceBoxes.json",
+    'mySekaiMaterials': "$baseUrl/mysekaiMaterials.json",
+    'mySekaiFixtures': "$baseUrl/mysekaiFixtures.json",
+    'mysekaiFixtureMainGenres': "$baseUrl/mysekaiFixtureMainGenres.json",
+    'mysekaiBlueprints': "$baseUrl/mysekaiBlueprints.json",
+    'mysekaiBlueprintMysekaiMaterialCosts':
+        "$baseUrl/mysekaiBlueprintMysekaiMaterialCosts.json",
+    'mysekaiFixtureSubGenres': "$baseUrl/mysekaiFixtureSubGenres.json",
+    'mysekaiFixtureTags': "$baseUrl/mysekaiFixtureTags.json",
+    'mysekaiGameCharacterUnitGroups':
+        "$baseUrl/mysekaiGameCharacterUnitGroups.json",
+    'mysekaiCharacterTalkConditions':
+        "$baseUrl/mysekaiCharacterTalkConditions.json",
+    'mysekaiCharacterTalkConditionGroups':
+        "$baseUrl/mysekaiCharacterTalkConditionGroups.json",
+    'mysekaiCharacterTalks': "$baseUrl/mysekaiCharacterTalks.json",
   };
 }
 
@@ -130,6 +150,9 @@ Future<void> databaseInitialization(void Function(String) onProgress) async {
       'cheerfulCarnivalTeams',
       'cheerfulCarnivalSummaries',
       'worldBlooms',
+      'mysekaiFixtureMainGenres',
+      'mysekaiFixtureSubGenres',
+      'mysekaiFixtureTags',
     ],
   );
 
@@ -183,7 +206,6 @@ Future<void> databaseInitialization(void Function(String) onProgress) async {
   onProgress('Decoding complete.');
 
   // --- Database Processing Phase ---
-  onProgress('Opening database...');
   final dbPath = await getDatabasesPath();
   final dbFilePath = join(dbPath, 'pjsk_viewer.db');
   final Database db = await openDatabase(
@@ -195,9 +217,12 @@ Future<void> databaseInitialization(void Function(String) onProgress) async {
       await EventDatabase.createTables(db);
       await CharacterDatabase.createTables(db);
       await MusicDatabase.createTables(db);
-      onProgress('Database tables created.');
+      await ResourceBoxesDatabase.createTables(db);
+      await MySekaiDatabase.createTables(db);
     },
   );
+  onProgress('Database opened.');
+
   final processors = <Future<String>>[];
 
   // Add processors conditionally based on keysToUpdate and successful decode
@@ -233,6 +258,8 @@ Future<void> databaseInitialization(void Function(String) onProgress) async {
         decodedDataMap['events'],
         decodedDataMap['eventDeckBonuses'],
         decodedDataMap['eventStories'],
+        decodedDataMap['eventExchangeSummaries'],
+        decodedDataMap['eventItems'],
         newVersionHashes['events']!,
       ),
     );
@@ -256,6 +283,42 @@ Future<void> databaseInitialization(void Function(String) onProgress) async {
         decodedDataMap['musicVocals'],
         decodedDataMap['musicDifficulties'],
         newVersionHashes['music']!,
+      ),
+    );
+  }
+  if (keysToUpdate.contains('resourceBoxes') &&
+      decodedDataMap['resourceBoxes'] != null) {
+    processors.add(
+      ResourceBoxesDatabase.processDecodedData(
+        db,
+        decodedDataMap['resourceBoxes'],
+        newVersionHashes['resourceBoxes']!,
+      ),
+    );
+  }
+  if (keysToUpdate.contains('mySekaiMaterials') &&
+      decodedDataMap['mySekaiMaterials'] != null) {
+    processors.add(
+      MySekaiDatabase.processMaterialsData(
+        db,
+        decodedDataMap['mySekaiMaterials'],
+        newVersionHashes['mySekaiMaterials']!,
+      ),
+    );
+  }
+  if (keysToUpdate.contains('mySekaiFixtures') &&
+      decodedDataMap['mySekaiFixtures'] != null) {
+    processors.add(
+      MySekaiDatabase.processFixturesData(
+        db,
+        decodedDataMap['mySekaiFixtures'],
+        decodedDataMap['mysekaiBlueprints'],
+        decodedDataMap['mysekaiBlueprintMysekaiMaterialCosts'],
+        decodedDataMap['mysekaiCharacterTalkConditions'],
+        decodedDataMap['mysekaiCharacterTalkConditionGroups'],
+        decodedDataMap['mysekaiCharacterTalks'],
+        decodedDataMap['mysekaiGameCharacterUnitGroups'],
+        newVersionHashes['mySekaiFixtures']!,
       ),
     );
   }
@@ -297,9 +360,7 @@ Future<void> saveFetchUrlsToPrefs({
     (k) => fetchUrls.containsKey(k),
   );
   for (final key in toSave) {
-    if (fetchedDataMap[key] != null) {
-      await prefs.setString(key, fetchedDataMap[key]!.body);
-    }
+    await prefs.setString(key, fetchedDataMap[key]!.body);
   }
 }
 

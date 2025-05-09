@@ -62,5 +62,19 @@
   "interval_days_plural": "%s ngày",
   "button_apply": "Áp dụng",
   "loading": "Đang tải...",
-  "train_cost": "Vật phẩm cần thiết cho đào tạo"
+  "train_cost": "Vật phẩm cần thiết cho đào tạo",
+  "my_sekai": "Thế giới của tôi",
+  "mysekai_fixture": "Thiết bị cố định",
+  "exchange": "Trao đổi",
+  "size": "Kích thước",
+  "genre": "Thể loại",
+  "sub_genre": "Thể loại phụ",
+  "tag": "Thẻ",
+  "cost": "Chi phí",  "is_enable_sketch": "Có thể vẽ phác thảo",
+  "is_obtained_by_convert": "Có thể nhận được bằng cách chuyển đổi",
+  "is_asssembled": "Có thể lắp ráp",
+  "is_disassembled": "Có thể tháo rời",
+  "limit": "Giới hạn",
+  "yes": "Có",
+  "no": "Không"
 }

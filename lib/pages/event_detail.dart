@@ -7,6 +7,8 @@ import 'package:pjsk_viewer/pages/event_tracker.dart';
 import 'package:pjsk_viewer/utils/audio_service.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
 import 'package:pjsk_viewer/utils/database/event_database.dart';
+import 'package:pjsk_viewer/utils/database/my_sekai_database.dart';
+import 'package:pjsk_viewer/utils/database/resource_boxes_database.dart';
 import 'package:pjsk_viewer/utils/detail_builder.dart';
 import 'package:pjsk_viewer/utils/helper.dart';
 import 'package:pjsk_viewer/utils/image_selector.dart';
@@ -27,6 +29,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
   final AudioService _audioService = AudioService();
   final ValueNotifier<bool> _showTimePointsNotifier = ValueNotifier(false);
   List<Map<String, dynamic>> _worldBlooms = [];
+  List<Map<String, dynamic>> _eventExchangeResourceBoxDetails = [];
+  Map<int, String> _eventItemAssetMap = {};
+  List<Map<String, dynamic>> _mySekaiMaterials = [];
 
   // --- Helper to format Duration ---
   String _formatDurationFull(Duration d, ContentLocalizations localizations) {
@@ -95,10 +100,38 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
         if (eventData['eventType'] == 'world_bloom') {
           final pref = await SharedPreferences.getInstance();
-          final List<dynamic> worldBlooms = json.decode(pref.getString('worldBlooms') ?? '[]');
-          _worldBlooms = worldBlooms.map((item) => Map<String, dynamic>.from(item)).toList();
+          final List<dynamic> worldBlooms = json.decode(
+            pref.getString('worldBlooms') ?? '[]',
+          );
+          _worldBlooms =
+              worldBlooms
+                  .map((item) => Map<String, dynamic>.from(item))
+                  .toList();
         }
 
+        // Fetch resource box details for event exchanges
+        final Map<String, dynamic> eventExchangeItems = json.decode(
+          eventData['eventExchangeSummaries'] ?? '{}',
+        );
+        if (eventExchangeItems.containsKey('eventExchanges')) {
+          final List<dynamic> exchanges =
+              eventExchangeItems['eventExchanges'] as List<dynamic>? ?? [];
+          final List<int> resourceBoxIds =
+              exchanges
+                  .map((exchange) => exchange['resourceBoxId'] as int? ?? 0)
+                  .toList();
+
+          if (resourceBoxIds.isNotEmpty) {
+            _eventExchangeResourceBoxDetails =
+                await ResourceBoxesDatabase.getResourceBoxesByPurpose(
+                  'event_exchange',
+                  resourceBoxIds,
+                );
+          }
+        }
+
+        _eventItemAssetMap = await EventDatabase.getEventItemAssetbundleMap();
+        _mySekaiMaterials = await MySekaiDatabase.getAllMaterials();
         setState(() {
           _eventData = eventData;
           _isLoading = false;
@@ -124,7 +157,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     final endTime = _eventData?['aggregateAt'] ?? 0;
 
     // Skip if start time is invalid or event already ended
-    if (endTime <= now || now<= startTime) {
+    if (endTime <= now || now <= startTime) {
       return const SizedBox.shrink();
     }
 
@@ -243,6 +276,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
     // get the event cards
     final List<Map<String, dynamic>> eventCards = _eventData?['cards'] ?? [];
 
+    // get the event exchange items
+    final Map<String, dynamic> eventExchangeItems = json.decode(
+      _eventData?['eventExchangeSummaries'] ?? '{}',
+    );
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final startTime = _eventData?['startAt'] ?? 0;
+
     return Scaffold(
       appBar: DetailBuilder.buildAppBar(context, displayEventName.translated),
       body: SingleChildScrollView(
@@ -286,21 +327,22 @@ class _EventDetailPageState extends State<EventDetailPage> {
             AudioPlayerFull(audioService: _audioService),
 
             // Story Outline
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 12.0),
-              padding: const EdgeInsets.all(12.0),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.cyan, width: 1.5),
-                borderRadius: BorderRadius.circular(8.0),
+            if (eventStoryOutline.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 12.0),
+                padding: const EdgeInsets.all(12.0),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.cyan, width: 1.5),
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: Text(
+                  eventStoryOutline,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontSize: 16),
+                  textAlign: TextAlign.left,
+                ),
               ),
-              child: Text(
-                eventStoryOutline,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontSize: 16),
-                textAlign: TextAlign.left,
-              ),
-            ),
 
             // Details Section
             Card(
@@ -368,8 +410,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     ),
 
                     // Bonus Characters
-                    const SizedBox(height: 12),
-                    DetailBuilder.buildBonusCharacterWidget(
+                    DetailBuilder.buildCharactersWidget(
                       localizations
                               .translate('event', "boostCharacters")
                               .translated ??
@@ -486,25 +527,28 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         );
                       },
                     ),
+
                     // Jump to Event Tracker
-                    DetailBuilder.buildDetailRow(
-                      localizations
-                          .translate('common', 'eventTracker')
-                          .translated,
-                      IconButton(
-                        icon: const Icon(Icons.arrow_forward),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (_) =>
-                                      EventTrackerPage(eventId: widget.eventId),
-                            ),
-                          );
-                        },
+                    if (now >= startTime)
+                      DetailBuilder.buildDetailRow(
+                        localizations
+                            .translate('common', 'eventTracker')
+                            .translated,
+                        IconButton(
+                          icon: const Icon(Icons.arrow_forward),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (_) => EventTrackerPage(
+                                      eventId: widget.eventId,
+                                    ),
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                    ),
 
                     //Gachas
                     DetailBuilder.buildGachaList(
@@ -512,6 +556,29 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       localizations.translate('common', "gacha").translated ??
                           'Gacha',
                       _eventData!['gachas'],
+                    ),
+
+                    // Event Exchanges
+                    DetailBuilder.buildDetailRow(
+                      appLocalizations.translate('exchange'),
+                      IconButton(
+                        icon: const Icon(Icons.arrow_forward),
+                        onPressed: () {
+                          DetailBuilder.popUpDialog(
+                            context,
+                            DetailBuilder.buildEventExchangeList(
+                              context,
+                              eventExchangeItems['eventExchanges']
+                                  .cast<Map<String, dynamic>>()
+                                  .toList(),
+                              _eventExchangeResourceBoxDetails,
+                              eventCards,
+                              _eventItemAssetMap,
+                              _mySekaiMaterials,
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ],
                 ),

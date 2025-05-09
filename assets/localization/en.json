@@ -62,5 +62,20 @@
   "interval_days_plural": "%s days",
   "button_apply": "Apply",
   "loading": "Loading...",
-  "train_cost": "Training Costs"
+  "train_cost": "Training Costs",
+  "my_sekai": "My Sekai",
+  "mysekai_fixture": "Fixture",
+  "exchange": "Exchange",
+  "size": "Size",
+  "genre": "Genre",
+  "sub_genre": "Sub Genre",
+  "tag": "Tags",
+  "cost": "Cost",
+  "is_enable_sketch" : "Can be sketched",
+  "is_obtained_by_convert": "Can be obtained by convert",
+  "is_asssembled": "Can be assembled",
+  "is_disassembled": "Can be disassembled",
+  "limit": "Limit",
+  "yes": "Yes",
+  "no": "No"
 }

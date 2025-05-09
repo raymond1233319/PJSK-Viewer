@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:pjsk_viewer/i18n/app_localizations.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
@@ -9,18 +11,20 @@ import 'package:pjsk_viewer/utils/searchable_dropdown.dart';
 class FilterConfig<T> {
   final String header;
   final List<Map<String, String>> options;
-  List<String> selectedValues;
+  List<String> selectedValues = [];
   final bool Function(T item, List<String> selectedValues) filterFunc;
   bool isDropdown;
+  bool isFullPath;
+  bool blueMode;
 
   FilterConfig({
     required this.header,
     required this.options,
-    List<String>? selectedValues,
     required this.filterFunc,
-    bool? isDropdown,
-  }) : isDropdown = isDropdown ?? false,
-       selectedValues = selectedValues ?? [];
+    this.isDropdown = false,
+    this.isFullPath = false,
+    this.blueMode = false,
+  });
 }
 
 class FilterOptions {
@@ -235,15 +239,32 @@ class FilterBottomSheet<T> extends StatelessWidget {
     final val = option['value']!;
     final path = option['assetPath'] ?? '';
     final isSelected = filter.selectedValues.contains(val);
+
     // if assetPath is not empty, use it to display the image
-    final displayWidget =
-        path.isNotEmpty
-            ? Image.asset('$path$val.png', height: 24)
-            : Text(option['display'] ?? '');
+    Widget displayWidget;
+
+    if (path.isNotEmpty) {
+      displayWidget =
+          filter.isFullPath
+              ? Image.asset(path, height: 24)
+              : Image.asset('$path$val.png', height: 24);
+    } else {
+      displayWidget = Text(option['display'] ?? '');
+    }
+    Color isSelectedColour;
+    Color isNotSelectedColour;
+    if (filter.blueMode) {
+      isSelectedColour = Colors.blue;
+      isNotSelectedColour = Colors.blueGrey.shade300;
+    } else {
+      isSelectedColour = Colors.grey;
+      isNotSelectedColour = Colors.transparent;
+    }
 
     return GestureDetector(
       onTap: () {
         if (isSelected) {
+          developer.log('Removing $val from ${filter.header}');
           filter.selectedValues.remove(val);
         } else {
           filter.selectedValues.add(val);
@@ -251,10 +272,10 @@ class FilterBottomSheet<T> extends StatelessWidget {
         (context as Element).markNeedsBuild();
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8),
+        margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.grey : Colors.transparent,
+          color: isSelected ? isSelectedColour : isNotSelectedColour,
           border: Border.all(color: Colors.black),
           borderRadius: BorderRadius.circular(8),
         ),
@@ -352,38 +373,18 @@ class FilterBottomSheet<T> extends StatelessWidget {
                       )
                     // if not dropdown mode, render a grid
                     else
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            for (
-                              var start = 0;
-                              start < filter.options.length;
-                              start += 7
-                            ) ...[
-                              Row(
-                                children:
-                                    filter.options
-                                        .sublist(
-                                          start,
-                                          start + 7 < filter.options.length
-                                              ? start + 7
-                                              : filter.options.length,
-                                        )
-                                        .map(
-                                          (option) => _buildOption(
-                                            context,
-                                            option,
-                                            filter,
-                                          ),
-                                        )
-                                        .toList(),
-                              ),
-                              if (start + 7 < filter.options.length)
-                                const SizedBox(height: 8),
-                            ],
-                          ],
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Wrap(
+                          spacing: 4,
+                          runSpacing: 4,
+                          children:
+                              filter.options
+                                  .map(
+                                    (option) =>
+                                        _buildOption(context, option, filter),
+                                  )
+                                  .toList(),
                         ),
                       ),
                     const Divider(),
@@ -452,6 +453,7 @@ class IndexPage<T> extends StatefulWidget {
   final List<FilterConfig<T>> filters;
   // pagination
   final int pageSize;
+  final int itemsPerRow;
   final ScrollController scrollController;
   final Widget Function(BuildContext, T) itemBuilder;
 
@@ -470,6 +472,7 @@ class IndexPage<T> extends StatefulWidget {
     required this.itemBuilder,
     this.appBarActions,
     this.appBarSwitchText,
+    this.itemsPerRow = 1,
   });
 
   @override
@@ -528,9 +531,20 @@ class _IndexPageState<T> extends State<IndexPage<T>> {
     });
   }
 
+  Widget builder(context, idx) {
+    if (_lazyLoad.isLoadingIndicator(idx)) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    return widget.itemBuilder(context, _lazyLoad.filteredItems[idx]);
+  }
+
   @override
   Widget build(BuildContext context) {
     final localizations = ContentLocalizations.of(context);
+
     return Scaffold(
       appBar: AppBar(
         // Title
@@ -642,21 +656,23 @@ class _IndexPageState<T> extends State<IndexPage<T>> {
                   AppLocalizations.of(context).translate('no_items_found'),
                 ),
               )
+              : widget.itemsPerRow > 1
+              ? GridView.builder(
+                controller: widget.scrollController,
+                padding: EdgeInsets.zero,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: widget.itemsPerRow,
+                  crossAxisSpacing: 4,
+                  mainAxisSpacing: 4,
+                  childAspectRatio: 0.7,
+                ),
+                itemCount: _lazyLoad.itemCount,
+                itemBuilder: builder,
+              )
               : ListView.builder(
                 controller: widget.scrollController,
                 itemCount: _lazyLoad.itemCount,
-                itemBuilder: (context, idx) {
-                  if (_lazyLoad.isLoadingIndicator(idx)) {
-                    return const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Center(child: CircularProgressIndicator()),
-                    );
-                  }
-                  return widget.itemBuilder(
-                    context,
-                    _lazyLoad.filteredItems[idx],
-                  );
-                },
+                itemBuilder: builder,
               ),
     );
   }
@@ -701,7 +717,7 @@ Widget buildIndexItem<T>({
                     : top,
           ),
           ListTile(
-            title: Text(title),
+            title: Text(title, maxLines: 2, overflow: TextOverflow.ellipsis),
             subtitle: subtitle.isNotEmpty ? Text(subtitle) : null,
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap:

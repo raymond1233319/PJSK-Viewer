@@ -342,19 +342,25 @@ class _CardDetailPageState extends State<CardDetailPage> {
 
                             // Training cost
                             if (_cardData!['specialTrainingCosts'] != '[]')
-                              DetailBuilder.buildDetailRowWithWidgets(
+                              DetailBuilder.buildDetailRow(
                                 AppLocalizations.of(
                                   context,
                                 ).translate('train_cost'),
-                                json
-                                    .decode(_cardData!['specialTrainingCosts'])
-                                    .map<Widget>(
-                                      (entry) =>
-                                          DetailBuilder.buildResourceItem(
-                                            entry['cost'],
-                                          ),
-                                    )
-                                    .toList(),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children:
+                                      json
+                                          .decode(
+                                            _cardData!['specialTrainingCosts'],
+                                          )
+                                          .map<Widget>(
+                                            (entry) =>
+                                                DetailBuilder.buildResourceItem(
+                                                  entry['cost'],
+                                                ),
+                                          )
+                                          .toList(),
+                                ),
                               ),
 
                             // Type
@@ -588,14 +594,14 @@ class _CardDetailPageState extends State<CardDetailPage> {
 
                             // Episodes
                             if (episodes != null && episodes.isNotEmpty)
-                            Text(
-                              localizations
-                                      ?.translate('card', "sideStory")
-                                      .translated ??
-                                  'Side Story',
-                              style: Theme.of(context).textTheme.headlineSmall
-                                  ?.copyWith(fontWeight: FontWeight.bold),
-                            ),
+                              Text(
+                                localizations
+                                        ?.translate('card', "sideStory")
+                                        .translated ??
+                                    'Side Story',
+                                style: Theme.of(context).textTheme.headlineSmall
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
                             if (episodes != null && episodes.isNotEmpty)
                               Row(
                                 mainAxisAlignment:

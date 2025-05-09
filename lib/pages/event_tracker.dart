@@ -142,7 +142,7 @@ class _RankingTableState extends State<RankingTable> {
   bool _isFetchingPredictions = true;
   bool _isLoadingWorldBlooms = true;
   String? _errorMessage;
-  int characterId = -1;
+  int _characterId = -1;
   final ValueNotifier<bool> _showAllNotifier = ValueNotifier(false);
 
   Map<int, Map<String, String>>? _cardInfoMap;
@@ -158,52 +158,6 @@ class _RankingTableState extends State<RankingTable> {
     setState(() {
       _isLoadingAssetBundleNames = false;
     });
-  }
-
-  Future<void> _fetchEventRanking(int eventId, int characterId) async {
-    final uri =
-        (characterId != -1)
-            ? await () async {
-              final timeResp = await http.get(
-                Uri.parse(
-                  'https://api.sekai.best/event/$eventId/chapter_rankings/time?charaId=$characterId&region=jp',
-                ),
-              );
-              final times =
-                  (json.decode(timeResp.body) as Map<String, dynamic>)['data']
-                      as List;
-              final ts = times.last as String;
-              return Uri.parse(
-                'https://api.sekai.best/event/$eventId/chapter_rankings?charaId=$characterId&region=jp&timestamp=$ts',
-              );
-            }()
-            : await () async {
-              final timeResp = await http.get(
-                Uri.parse(
-                  'https://api.sekai.best/event/$eventId/rankings/time?region=jp',
-                ),
-              );
-              final times =
-                  (json.decode(timeResp.body) as Map<String, dynamic>)['data']
-                      as List;
-              final ts = times.last as String;
-              return Uri.parse(
-                'https://api.sekai.best/event/$eventId/rankings?region=jp&timestamp=$ts',
-              );
-            }();
-    developer.log('Fetching event ranking from $uri');
-    final respone = await http.get(uri);
-
-    if (respone.statusCode == 200) {
-      final jsonMap = json.decode(respone.body) as Map<String, dynamic>;
-      _rankings =
-          (jsonMap['data']['eventRankings'] as List)
-              .map((e) => e as Map<String, dynamic>)
-              .toList();
-    } else {
-      developer.log('Fetching event ranking from $uri');
-      throw Exception('Error: ${respone.statusCode}');
-    }
   }
 
   Future<void> _loadWorldBlooms() async {
@@ -231,10 +185,6 @@ class _RankingTableState extends State<RankingTable> {
     List<int> worldBloomCharacters =
         filteredWorldBlooms.map((b) => b['gameCharacterId'] as int).toList();
     worldBloomCharacters.insert(0, -1);
-    developer.log(
-      'World Bloom characters: $worldBloomCharacters',
-      name: 'EventTrackerPage',
-    );
     // local selection state
     List<bool> isSelected = List<bool>.filled(
       worldBloomCharacters.length,
@@ -473,7 +423,7 @@ class _RankingTableState extends State<RankingTable> {
                     for (var i = 0; i < _isSelected.length; i++) {
                       _isSelected[i] = (i == index) ? !_isSelected[i] : false;
                     }
-                    characterId =
+                    _characterId =
                         _isSelected[index] ? _worldBloomCharacters[index] : -1;
                   });
                 },
@@ -481,13 +431,16 @@ class _RankingTableState extends State<RankingTable> {
             ),
           ),
         FutureBuilder<void>(
-          future: _fetchEventRanking(widget.eventId, characterId),
+          future: fetchEventRanking(widget.eventId, _characterId),
           builder: (ctx, snap) {
             if (snap.connectionState != ConnectionState.done) {
               return const Center(child: CircularProgressIndicator());
             }
             if (snap.hasError) {
               return Center(child: Text('Error: ${snap.error}'));
+            }
+            if (snap.hasData) {
+              _rankings = snap.data as List<Map<String, dynamic>>;
             }
             // once data is fetched, build the ranking list
             return Column(

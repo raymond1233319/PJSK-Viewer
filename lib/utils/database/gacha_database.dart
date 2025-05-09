@@ -168,9 +168,6 @@ class GachaDatabase {
         if (charUpdateCount > 0) {
           await charUpdateBatch.commit(noResult: true);
         }
-        developer.log(
-          "Finished updating characters field for $charUpdateCount gachas.",
-        );
       });
 
       await _updateGachaType(db, latestGachaId, ceilList, gachaList);
