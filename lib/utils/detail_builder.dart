@@ -10,6 +10,7 @@ import 'package:pjsk_viewer/pages/card_detail.dart';
 import 'package:pjsk_viewer/pages/gacha_detail.dart';
 import 'package:pjsk_viewer/utils/audio_service.dart';
 import 'package:pjsk_viewer/utils/helper.dart';
+import 'package:pjsk_viewer/utils/globals.dart';
 
 class DetailBuilder {
   static Widget buildCharacterIcon(characterId) {
@@ -108,7 +109,14 @@ class DetailBuilder {
     String label,
     LocalizedText value, {
     Widget? trailing,
+    bool isSwaped = false,
   }) {
+    if (isSwaped) {
+      value = LocalizedText(
+        japaneseText: value.translated,
+        translatedText: value.japanese,
+      );
+    }
     return buildDetailRow(
       label,
       Builder(
@@ -223,7 +231,7 @@ class DetailBuilder {
                 .map((item) => item is int ? item : int.parse(item.toString()))
                 .toList()
             : <int>[];
-            
+
     if (items.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -331,7 +339,7 @@ class DetailBuilder {
     }
   }
 
-  static Widget buildGachaPhase(String value, String audioUrl) {
+  static Widget buildGachaPhase(LocalizedText value, String audioUrl) {
     final audioService = AudioService();
     // Note: Context is obtained within the FutureBuilder below
     return Card(
@@ -350,7 +358,7 @@ class DetailBuilder {
               children: [
                 GestureDetector(
                   onTap: () async {
-                    await Clipboard.setData(ClipboardData(text: value));
+                    await Clipboard.setData(ClipboardData(text: value.combined));
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
@@ -360,10 +368,21 @@ class DetailBuilder {
                     );
                   },
                   child: Center(
-                    child: Text(
-                      value,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.titleMedium,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          value.japanese,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        if (value.japanese != value.translated)
+                          Text(
+                            value.translated,
+                            style: TextStyle(color: Colors.grey[600]),
+                            textAlign: TextAlign.center,
+                          ),
+                      ],
                     ),
                   ),
                 ),
@@ -417,8 +436,8 @@ class DetailBuilder {
     // decide which URL and frame to use
     final String url =
         isTrainedImage
-            ? 'https://storage.sekai.best/sekai-jp-assets/thumbnail/chara/${assetbundleName}_after_training.webp'
-            : 'https://storage.sekai.best/sekai-jp-assets/thumbnail/chara/${assetbundleName}_normal.webp';
+            ? '${AppGlobals.jpAssetUrl}/thumbnail/chara/${assetbundleName}_after_training.webp'
+            : '${AppGlobals.jpAssetUrl}/thumbnail/chara/${assetbundleName}_normal.webp';
     final String frame =
         isTrainedImage
             ? 'assets/frame/frame_thumbnail_${rarity}_trained.png'
@@ -567,11 +586,11 @@ class DetailBuilder {
               final String gachaAssetName = 'gacha$gachaId';
               String logoUrl =
                   assetbundleName.isNotEmpty
-                      ? 'https://storage.sekai.best/sekai-jp-assets/gacha/$assetbundleName/logo/logo.webp'
+                      ? '${AppGlobals.assetUrl}/gacha/$assetbundleName/logo/logo.webp'
                       : '';
               String bannerUrl =
                   assetbundleName.isNotEmpty
-                      ? 'https://storage.sekai.best/sekai-jp-assets/home/banner/banner_$gachaAssetName/banner_$gachaAssetName.webp'
+                      ? '${AppGlobals.assetUrl}/home/banner/banner_$gachaAssetName/banner_$gachaAssetName.webp'
                       : '';
               return GestureDetector(
                 onTap: () {
@@ -773,7 +792,7 @@ class DetailBuilder {
     final resourceType = cost['resourceType'];
     final quantity = cost['quantity'];
     final imageUrl =
-        'https://storage.sekai.best/sekai-jp-assets/thumbnail/$resourceType/$resourceType$resourceId.webp';
+        '${AppGlobals.jpAssetUrl}/thumbnail/$resourceType/$resourceType$resourceId.webp';
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -833,7 +852,7 @@ class DetailBuilder {
             children: [
               CachedNetworkImage(
                 imageUrl:
-                    'https://storage.sekai.best/sekai-jp-assets/thumbnail/common_material/jewel.webp',
+                    '${AppGlobals.assetUrl}/thumbnail/common_material/jewel.webp',
                 width: 32,
                 height: 32,
                 placeholder:
@@ -880,11 +899,11 @@ class DetailBuilder {
     final rightName = team.length > 1 ? team[1]['teamName'] : '';
     final leftImageUrl =
         team.isNotEmpty
-            ? 'https://storage.sekai.best/sekai-jp-assets/event/$assetbundleName/team_image/${team[0]['assetbundleName']}.webp'
+            ? '${AppGlobals.assetUrl}/event/$assetbundleName/team_image/${team[0]['assetbundleName']}.webp'
             : '';
     final rightImageUrl =
         team.length > 1
-            ? 'https://storage.sekai.best/sekai-jp-assets/event/$assetbundleName/team_image/${team[1]['assetbundleName']}.webp'
+            ? '${AppGlobals.assetUrl}/event/$assetbundleName/team_image/${team[1]['assetbundleName']}.webp'
             : '';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1208,14 +1227,14 @@ class DetailBuilder {
       case 'practice_ticket':
       case 'skill_practice_ticket':
         final url =
-            'https://storage.sekai.best/sekai-jp-assets/thumbnail/$resourceType/ticket$resourceId.webp';
+            '${AppGlobals.assetUrl}/thumbnail/$resourceType/ticket$resourceId.webp';
         icon = buildImageWithQuantityOverlay(url, size, quantity);
         break;
 
       case 'event_item':
         final itemAssetbundleName = eventItemAssetMap[resourceId] ?? '';
         final url =
-            'https://storage.sekai.best/sekai-jp-assets/thumbnail/common_event/$itemAssetbundleName/icon_eventbadge_1.webp';
+            '${AppGlobals.assetUrl}/thumbnail/common_event/$itemAssetbundleName/icon_eventbadge_1.webp';
         icon = buildImageWithQuantityOverlay(url, size, quantity);
         break;
 
@@ -1226,15 +1245,15 @@ class DetailBuilder {
         );
         final iconAssetbundleName = material['iconAssetbundleName'] as String?;
         final url =
-            'https://storage.sekai.best/sekai-jp-assets/mysekai/thumbnail/material/$iconAssetbundleName.webp';
+            '${AppGlobals.assetUrl}/mysekai/thumbnail/material/$iconAssetbundleName.webp';
         icon = buildImageWithQuantityOverlay(url, size, quantity);
         break;
 
       default:
         final url =
             resourceId != -1
-                ? 'https://storage.sekai.best/sekai-jp-assets/thumbnail/$resourceType/$resourceType$resourceId.webp'
-                : 'https://storage.sekai.best/sekai-jp-assets/thumbnail/common_material/$resourceType.webp';
+                ? '${AppGlobals.assetUrl}/thumbnail/$resourceType/$resourceType$resourceId.webp'
+                : '${AppGlobals.assetUrl}/thumbnail/common_material/$resourceType.webp';
         icon = buildImageWithQuantityOverlay(url, size, quantity);
     }
     return icon;

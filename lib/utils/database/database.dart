@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
+import 'package:pjsk_viewer/utils/globals.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'card_database.dart';
@@ -22,17 +23,10 @@ class FetchedData {
   FetchedData(this.body, this.versionHash);
 }
 
-Future<String> get getDatabaseUrl async {
-  final prefs = await SharedPreferences.getInstance();
-  final storedBase =
-      prefs.getString('db_base_url') ?? 'https://sekai-world.github.io/';
-  final version = prefs.getString('database_version') ?? 'sekai-master-db-diff';
-
-  return version.isNotEmpty ? "$storedBase/$version" : storedBase;
-}
-
 Future<Map<String, String>> buildFetchUrls() async {
-  final baseUrl = await getDatabaseUrl;
+  // This function builds the URLs for fetching data
+  final baseUrl = AppGlobals.databaseUrl;
+  
   return {
     'cards': "$baseUrl/cards.json",
     'gachas': "$baseUrl/gachas.json",
@@ -52,28 +46,28 @@ Future<Map<String, String>> buildFetchUrls() async {
     'cardEpisodes': "$baseUrl/cardEpisodes.json",
     'eventStories': "$baseUrl/eventStories.json",
     'another3dmvCutIns': "$baseUrl/another3dmvCutIns.json",
-    'cardSupplies': "$baseUrl/cardSupplies.json",
+    'cardSupplies': "${AppGlobals.jpDatabaseUrl}/cardSupplies.json",
     'cheerfulCarnivalTeams': "$baseUrl/cheerfulCarnivalTeams.json",
     'cheerfulCarnivalSummaries': "$baseUrl/cheerfulCarnivalSummaries.json",
     'worldBlooms': "$baseUrl/worldBlooms.json",
     'eventExchangeSummaries': "$baseUrl/eventExchangeSummaries.json",
     'eventItems': "$baseUrl/eventItems.json",
     'resourceBoxes': "$baseUrl/resourceBoxes.json",
-    'mySekaiMaterials': "$baseUrl/mysekaiMaterials.json",
-    'mySekaiFixtures': "$baseUrl/mysekaiFixtures.json",
-    'mysekaiFixtureMainGenres': "$baseUrl/mysekaiFixtureMainGenres.json",
-    'mysekaiBlueprints': "$baseUrl/mysekaiBlueprints.json",
+    'mySekaiMaterials': "${AppGlobals.jpDatabaseUrl}/mysekaiMaterials.json",
+    'mySekaiFixtures': "${AppGlobals.jpDatabaseUrl}/mysekaiFixtures.json",
+    'mysekaiFixtureMainGenres': "${AppGlobals.jpDatabaseUrl}/mysekaiFixtureMainGenres.json",
+    'mysekaiBlueprints': "${AppGlobals.jpDatabaseUrl}/mysekaiBlueprints.json",
     'mysekaiBlueprintMysekaiMaterialCosts':
-        "$baseUrl/mysekaiBlueprintMysekaiMaterialCosts.json",
-    'mysekaiFixtureSubGenres': "$baseUrl/mysekaiFixtureSubGenres.json",
-    'mysekaiFixtureTags': "$baseUrl/mysekaiFixtureTags.json",
+        "${AppGlobals.jpDatabaseUrl}/mysekaiBlueprintMysekaiMaterialCosts.json",
+    'mysekaiFixtureSubGenres': "${AppGlobals.jpDatabaseUrl}/mysekaiFixtureSubGenres.json",
+    'mysekaiFixtureTags': "${AppGlobals.jpDatabaseUrl}/mysekaiFixtureTags.json",
     'mysekaiGameCharacterUnitGroups':
-        "$baseUrl/mysekaiGameCharacterUnitGroups.json",
+        "${AppGlobals.jpDatabaseUrl}/mysekaiGameCharacterUnitGroups.json",
     'mysekaiCharacterTalkConditions':
-        "$baseUrl/mysekaiCharacterTalkConditions.json",
+        "${AppGlobals.jpDatabaseUrl}/mysekaiCharacterTalkConditions.json",
     'mysekaiCharacterTalkConditionGroups':
-        "$baseUrl/mysekaiCharacterTalkConditionGroups.json",
-    'mysekaiCharacterTalks': "$baseUrl/mysekaiCharacterTalks.json",
+        "${AppGlobals.jpDatabaseUrl}/mysekaiCharacterTalkConditionGroups.json",
+    'mysekaiCharacterTalks': "${AppGlobals.jpDatabaseUrl}/mysekaiCharacterTalks.json",
   };
 }
 
@@ -106,6 +100,8 @@ dynamic _decodeJson(String jsonString) {
 
 Future<void> databaseInitialization(void Function(String) onProgress) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  // Check if the database needs to be updated
   bool needsUpdate = true;
   final lastUpdateMs = prefs.getInt('db_update_time') ?? 0;
   final intervalDays = prefs.getInt('db_update_interval_days') ?? 1;
@@ -172,6 +168,7 @@ Future<void> databaseInitialization(void Function(String) onProgress) async {
     final String versionKey = '${key}_version'; // e.g., cards_version
     final String? storedHash = prefs.getString(versionKey);
 
+    // Check if the fetched data is different from the stored data
     if (storedHash != fetchedData.versionHash) {
       keysToUpdate.add(key);
       newVersionHashes[key] = fetchedData.versionHash;
@@ -181,6 +178,7 @@ Future<void> databaseInitialization(void Function(String) onProgress) async {
     }
   }
 
+  // Finish if no updates are needed
   if (decodedJson.isEmpty) {
     // Set update time
     await prefs.setInt('db_update_time', DateTime.now().millisecondsSinceEpoch);
@@ -208,6 +206,7 @@ Future<void> databaseInitialization(void Function(String) onProgress) async {
   // --- Database Processing Phase ---
   final dbPath = await getDatabasesPath();
   final dbFilePath = join(dbPath, 'pjsk_viewer.db');
+  // Open the database
   final Database db = await openDatabase(
     dbFilePath,
     version: 1,
@@ -333,9 +332,9 @@ Future<void> databaseInitialization(void Function(String) onProgress) async {
   await db.close();
   // update the last update time
   await prefs.setInt('db_update_time', DateTime.now().millisecondsSinceEpoch);
-  // update the asset version
+  // update the data version
   try {
-    final databaseLink = await getDatabaseUrl;
+    final databaseLink = AppGlobals.databaseUrl;
     final respone = await http.get(Uri.parse('$databaseLink/versions.json'));
     if (respone.statusCode == 200) {
       final jsonMap = json.decode(respone.body) as Map<String, dynamic>;
@@ -360,7 +359,7 @@ Future<void> saveFetchUrlsToPrefs({
     (k) => fetchUrls.containsKey(k),
   );
   for (final key in toSave) {
-    await prefs.setString(key, fetchedDataMap[key]!.body);
+    await prefs.setString(key, fetchedDataMap[key]?.body ?? '');
   }
 }
 
@@ -397,11 +396,6 @@ Future<void> updateDatabase(context) async {
   );
   try {
     final prefs = await SharedPreferences.getInstance();
-    final fetchUrls = await buildFetchUrls();
-    final List<String> names = fetchUrls.keys.toList();
-    for (var name in names) {
-      await prefs.remove("${name}_version");
-    }
     await prefs.setInt('db_update_time', 0);
 
     await databaseInitialization((message) {
@@ -415,7 +409,6 @@ Future<void> updateDatabase(context) async {
     if (setDialogState != null) {
       setDialogState!(() {});
     }
-    await Future.delayed(Duration(seconds: 5));
   } finally {
     await Future.delayed(Duration(seconds: 1));
     // Close the dialog
@@ -423,4 +416,30 @@ Future<void> updateDatabase(context) async {
       Navigator.of(context).pop();
     }
   }
+}
+
+/// Clears the database by removing the DB file and resetting all version tracking
+Future<void> clearDatabase() async {
+  try {
+    // Delete the database file
+    final dbPath = await getDatabasesPath();
+    final dbFilePath = join(dbPath, 'pjsk_viewer.db');
+    bool dbExists = await databaseExists(dbFilePath);
+    if (dbExists) {
+      await deleteDatabase(dbFilePath);
+    }
+
+    // Clear all version hashes and data from SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    final fetchUrls = await buildFetchUrls();
+    final List<String> keys = fetchUrls.keys.toList();
+
+    for (final key in keys) {
+      await prefs.remove('${key}_version');
+      await prefs.remove(key);
+    }
+
+    // Clear data version
+    await prefs.remove('data_version');
+  } catch (_) {}
 }

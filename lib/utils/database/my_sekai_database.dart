@@ -317,8 +317,8 @@ class MySekaiDatabase {
           {
             'bluprintId': blueprint['id'] as int? ?? 0,
             'mysekaiCraftType': blueprint['mysekaiCraftType'] ?? '',
-            'isEnableSketch': blueprint['isEnableSketch'] ?? 0,
-            'isObtainedByConvert': blueprint['isObtainedByConvert'] ?? 0,
+            'isEnableSketch': blueprint['isEnableSketch'] ? 1 : 0,
+            'isObtainedByConvert': blueprint['isObtainedByConvert'] ? 1 : 0,
           },
           where: 'id = ?',
           whereArgs: [blueprint['craftTargetId']],

@@ -7,7 +7,7 @@ import 'package:pjsk_viewer/pages/gacha_detail.dart';
 import 'package:pjsk_viewer/pages/index.dart';
 import 'package:pjsk_viewer/utils/database/gacha_database.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
-
+import 'package:pjsk_viewer/utils/globals.dart';
 class GachaIndexPage extends StatefulWidget {
   const GachaIndexPage({super.key});
 
@@ -46,12 +46,12 @@ class _GachaIndexPageState extends State<GachaIndexPage> {
     final asset = g['assetbundleName'] as String? ?? '';
     final logoUrl =
         asset.isNotEmpty
-            ? 'https://storage.sekai.best/sekai-jp-assets/gacha/$asset/logo/logo.webp'
+            ? '${AppGlobals.assetUrl}/gacha/$asset/logo/logo.webp'
             : null;
     final String gachaAssetName = 'gacha$gachaId';
     final bannerUrl =
         asset.isNotEmpty
-            ? 'https://storage.sekai.best/sekai-jp-assets/home/banner/banner_$gachaAssetName/banner_$gachaAssetName.webp'
+            ? '${AppGlobals.assetUrl}/home/banner/banner_$gachaAssetName/banner_$gachaAssetName.webp'
             : '';
 
     final DateFormat fmt = DateFormat('dd/MM/yyyy HH:mm');
@@ -61,7 +61,9 @@ class _GachaIndexPageState extends State<GachaIndexPage> {
     final String endDateStr = fmt.format(
       DateTime.fromMillisecondsSinceEpoch(g['endAt'] as int? ?? 0).toLocal(),
     );
-    String gachaTypeDisplay = applocalizations.translate('gacha_${g['gachaType']}');
+    String gachaTypeDisplay = applocalizations.translate(
+      'gacha_${g['gachaType']}',
+    );
     final subTitleText = "$gachaTypeDisplay\n$startDateStr ~ \n$endDateStr";
     bool showBanner = false;
     final Widget top =

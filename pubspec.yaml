@@ -82,6 +82,10 @@ flutter:
   assets:
     - assets/localization/
     - assets/jp/logol/
+    - assets/en/logol/
+    - assets/kr/logol/
+    - assets/tw/logol/
+    - assets/cn/logol/
     - assets/chara_icons/
     - assets/
     - assets/common/logo_mini/

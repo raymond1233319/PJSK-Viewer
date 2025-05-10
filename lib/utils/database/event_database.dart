@@ -370,4 +370,33 @@ class EventDatabase {
       }
     }
   }
+
+  /// Get current active event, or null if no event is active
+  static Future<Map<String, dynamic>?> getCurrentEvent() async {
+    Database? db;
+    try {
+      final String path = join(await getDatabasesPath(), 'pjsk_viewer.db');
+      db = await openDatabase(path, readOnly: true);
+
+      // Find events where current time is between startAt and aggregateAt
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final List<Map<String, dynamic>> results = await db.query(
+        'events',
+        where: 'startAt <= ? AND aggregateAt >= ?',
+        whereArgs: [now, now],
+        limit: 1,
+      );
+
+      if (results.isEmpty) {
+        return null; // No current event
+      }
+      return Map.from(results.first);
+    } catch (e) {
+      return null; // Return null on error
+    } finally {
+      if (db != null && db.isOpen) {
+        await db.close();
+      }
+    }
+  }
 }

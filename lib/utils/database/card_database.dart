@@ -75,7 +75,6 @@ class CardDatabase {
         for (final card in cardsList) {
           final int cardId = card['id'] as int? ?? 0;
           if (cardId <= latestCardId) continue;
-
           batch.insert('cards', {
             'id': cardId,
             'seq': card['seq'],
@@ -98,7 +97,6 @@ class CardDatabase {
             'releaseAt': card['releaseAt'],
             'archivePublishedAt': card['archivePublishedAt'],
             'cardSupplyId': card['cardSupplyId'],
-            // Storing complex fields as JSON strings
             'specialTrainingCosts': json.encode(
               card['specialTrainingCosts'] ?? [],
             ),
@@ -332,22 +330,6 @@ class CardDatabase {
       }
       card['gachas'] = gachaList;
 
-      // Get gachaType
-      final pref = await SharedPreferences.getInstance();
-      final List<Map<String, dynamic>> gachaTypes =
-          json
-              .decode(pref.getString('cardSupplies') ?? '[]')
-              .cast<Map<String, dynamic>>()
-              .toList();
-
-      final Map<int, String> cardSupplyTypeMap = {
-        for (var supply in gachaTypes)
-          if (supply['id'] != null && supply['cardSupplyType'] != null)
-            supply['id'] as int: supply['cardSupplyType'] as String,
-      };
-
-      card['gachaType'] = cardSupplyTypeMap[card['cardSupplyId']] ?? '';
-
       // Fetch the event ID for this card
       final int eventId = card['eventId'] as int? ?? -1;
       if (eventId != -1) {
@@ -365,6 +347,27 @@ class CardDatabase {
       } else {
         card['event'] = null;
       }
+
+      // Get gachaType
+      final pref = await SharedPreferences.getInstance();
+      final String? cardSuppliesJson = pref.getString('cardSupplies');
+      if (cardSuppliesJson == null || cardSuppliesJson.isEmpty) {
+        return card;
+      }
+      final List<Map<String, dynamic>> gachaTypes =
+          json
+              .decode(cardSuppliesJson)
+              .cast<Map<String, dynamic>>()
+              .toList();
+
+      final Map<int, String> cardSupplyTypeMap = {
+        for (var supply in gachaTypes)
+          if (supply['id'] != null && supply['cardSupplyType'] != null)
+            supply['id'] as int: supply['cardSupplyType'] as String,
+      };
+
+      card['gachaType'] = cardSupplyTypeMap[card['cardSupplyId']] ?? '';
+
       return card;
     } catch (e) {
       developer.log(

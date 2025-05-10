@@ -6,9 +6,8 @@ import 'package:pjsk_viewer/i18n/localizations.dart';
 import 'package:pjsk_viewer/utils/database/my_sekai_database.dart';
 import 'package:pjsk_viewer/utils/detail_builder.dart';
 import 'package:pjsk_viewer/utils/image_selector.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:pjsk_viewer/utils/globals.dart';
 class MysekaiFixtureDetailPage extends StatefulWidget {
   final int fixtureId;
   const MysekaiFixtureDetailPage({super.key, required this.fixtureId});
@@ -75,8 +74,7 @@ class _MysekaiFixtureDetailPageState extends State<MysekaiFixtureDetailPage> {
         _fixture!['assetbundleName'] as String? ?? '';
     final String type = _fixture!['mysekaiFixtureType'];
     final String layoutType = _fixture!['mysekaiSettableLayoutType'];
-    final String assetBaseUrl =
-        'https://storage.sekai.best/sekai-jp-assets/mysekai/thumbnail';
+    final String assetBaseUrl = '${AppGlobals.assetUrl}/mysekai/thumbnail';
     final thumbnailUrl =
         type != 'surface_appearance'
             ? '$assetBaseUrl/fixture/${fixtureAssetName}_1.webp'

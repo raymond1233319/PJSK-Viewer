@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
-
 import 'package:flutter/material.dart';
 import 'package:pjsk_viewer/i18n/app_localizations.dart';
 import 'package:pjsk_viewer/pages/event_tracker.dart';
@@ -13,6 +12,7 @@ import 'package:pjsk_viewer/utils/detail_builder.dart';
 import 'package:pjsk_viewer/utils/helper.dart';
 import 'package:pjsk_viewer/utils/image_selector.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pjsk_viewer/utils/globals.dart';
 
 class EventDetailPage extends StatefulWidget {
   final int eventId;
@@ -85,7 +85,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         // Construct and check audio URL after fetching data
         final assetbundleName = eventData['assetbundleName'];
         final audioUrl =
-            "https://storage.sekai.best/sekai-jp-assets/event/$assetbundleName/bgm/${assetbundleName}_top.mp3";
+            "${AppGlobals.assetUrl}/event/$assetbundleName/bgm/${assetbundleName}_top.mp3";
         _audioService.loadAudio(audioUrl);
 
         if (eventData['eventType'] == 'cheerful_carnival') {
@@ -113,6 +113,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         final Map<String, dynamic> eventExchangeItems = json.decode(
           eventData['eventExchangeSummaries'] ?? '{}',
         );
+
         if (eventExchangeItems.containsKey('eventExchanges')) {
           final List<dynamic> exchanges =
               eventExchangeItems['eventExchanges'] as List<dynamic>? ?? [];
@@ -250,23 +251,28 @@ class _EventDetailPageState extends State<EventDetailPage> {
       _eventData!['id'].toString(),
     );
 
+    // Swap the name if the region is not Japan
+    if (AppGlobals.region != 'jp') {
+      displayEventName = replaceMainText(displayEventName, _eventData!['name']);
+    }
+
     // Determine image URLs
     final String? assetbundleName = _eventData?['assetbundleName'];
     final logoUrl =
         assetbundleName != null
-            ? "https://storage.sekai.best/sekai-jp-assets/event/$assetbundleName/logo/logo.webp"
+            ? "${AppGlobals.assetUrl}/event/$assetbundleName/logo/logo.webp"
             : null;
     final bannerUrl =
         assetbundleName != null
-            ? "https://storage.sekai.best/sekai-jp-assets/home/banner/$assetbundleName/$assetbundleName.webp"
+            ? "${AppGlobals.assetUrl}/home/banner/$assetbundleName/$assetbundleName.webp"
             : null;
     final backgroundUrl =
         assetbundleName != null
-            ? "https://storage.sekai.best/sekai-jp-assets/event/$assetbundleName/screen/bg.webp"
+            ? "${AppGlobals.assetUrl}/event/$assetbundleName/screen/bg.webp"
             : null;
     final characterUrl =
         assetbundleName != null
-            ? "https://storage.sekai.best/sekai-jp-assets/event/$assetbundleName/screen/character.webp"
+            ? "${AppGlobals.assetUrl}/event/$assetbundleName/screen/character.webp"
             : null;
 
     final eventType = _eventData?['eventType'] ?? 'none';
@@ -283,9 +289,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
     final now = DateTime.now().millisecondsSinceEpoch;
     final startTime = _eventData?['startAt'] ?? 0;
-
     return Scaffold(
-      appBar: DetailBuilder.buildAppBar(context, displayEventName.translated),
+      appBar: DetailBuilder.buildAppBar(context, _eventData!['name']),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -385,7 +390,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                       DetailBuilder.buildDetailRowWithAsset(
                         localizations.translate('common', "unit").translated ??
                             'Unit',
-                        ['assets/jp/logol/logo_${_eventData!['unit']}.png'],
+                        [
+                          'assets/${AppGlobals.region}/logol/logo_${_eventData!['unit']}.png',
+                        ],
                       ),
 
                     // Virtual Live

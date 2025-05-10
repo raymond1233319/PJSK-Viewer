@@ -7,8 +7,7 @@ import 'package:pjsk_viewer/pages/index.dart';
 import 'package:pjsk_viewer/pages/music_detail.dart';
 import 'package:pjsk_viewer/utils/database/music_database.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
-import 'package:pjsk_viewer/utils/helper.dart';
-
+import 'package:pjsk_viewer/utils/globals.dart';
 class MusicIndexPage extends StatefulWidget {
   const MusicIndexPage({super.key});
 
@@ -119,7 +118,7 @@ class _MusicIndexPageState extends State<MusicIndexPage> {
     final assetbundleName = musicData['assetbundleName'] as String? ?? '';
     final logoUrl =
         assetbundleName.isNotEmpty
-            ? 'https://storage.sekai.best/sekai-jp-assets/music/jacket/$assetbundleName/$assetbundleName.webp'
+            ? '${AppGlobals.assetUrl}/music/jacket/$assetbundleName/$assetbundleName.webp'
             : '';
     final top = CachedNetworkImage(
       imageUrl: logoUrl,

@@ -8,7 +8,7 @@ import 'package:pjsk_viewer/utils/detail_builder.dart';
 import 'package:pjsk_viewer/utils/helper.dart';
 import 'package:pjsk_viewer/utils/image_selector.dart';
 import 'package:pjsk_viewer/i18n/app_localizations.dart';
-
+import 'package:pjsk_viewer/utils/globals.dart';
 class GachaDetailPage extends StatefulWidget {
   final int gachaId;
   final bool showBanner;
@@ -57,15 +57,15 @@ class _GachaDetailPageState extends State<GachaDetailPage> {
     final String gachaAssetName = 'gacha$gachaId';
     String logoUrl =
         assetbundleName.isNotEmpty
-            ? 'https://storage.sekai.best/sekai-jp-assets/gacha/$assetbundleName/logo/logo.webp'
+            ? '${AppGlobals.assetUrl}/gacha/$assetbundleName/logo/logo.webp'
             : '';
     String bannerUrl =
         assetbundleName.isNotEmpty
-            ? 'https://storage.sekai.best/sekai-jp-assets/home/banner/banner_$gachaAssetName/banner_$gachaAssetName.webp'
+            ? '${AppGlobals.assetUrl}/home/banner/banner_$gachaAssetName/banner_$gachaAssetName.webp'
             : '';
     String backgroundUrl =
         assetbundleName.isNotEmpty
-            ? 'https://storage.sekai.best/sekai-jp-assets/gacha/$assetbundleName/screen/texture/bg_${gachaAssetName}_1.webp'
+            ? '${AppGlobals.assetUrl}/gacha/$assetbundleName/screen/texture/bg_${gachaAssetName}_1.webp'
             : '';
 
     final List<dynamic> ratesList =
@@ -183,6 +183,7 @@ class _GachaDetailPageState extends State<GachaDetailPage> {
                             ),
 
                             // Summary
+                            if (gachaInformation['summary'] != null)
                             DetailBuilder.buildModalTextRow(
                               context,
                               localizations
@@ -193,6 +194,7 @@ class _GachaDetailPageState extends State<GachaDetailPage> {
                             ),
 
                             // Description
+                            if (gachaInformation['description'] != null)
                             DetailBuilder.buildModalTextRow(
                               context,
                               localizations

@@ -9,6 +9,7 @@ import 'package:pjsk_viewer/pages/index.dart';
 import 'package:pjsk_viewer/utils/database/card_database.dart';
 import 'package:pjsk_viewer/utils/helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pjsk_viewer/utils/globals.dart';
 
 class CardIndexPage extends StatefulWidget {
   final bool Function(Map<String, dynamic>)? filterFunc;
@@ -95,6 +96,13 @@ class _CardIndexPageState extends State<CardIndexPage> {
       'card_prefix',
       cardId.toString(),
     );
+    final originalName =
+        card['prefix'] ??
+        AppLocalizations.of(context).translate('unknown_card');
+    final translatedName =
+        AppGlobals.region == 'jp'
+            ? displayCardName?.translated
+            : displayCardName?.japanese;
     final assetbundleName = card['assetbundleName'] ?? '';
 
     String attribute = card['attr'].toString();
@@ -112,18 +120,22 @@ class _CardIndexPageState extends State<CardIndexPage> {
     final characterName = '$firstName $lastName'.trim();
     final cardType = applocalizations.translate(card['gachaType']);
 
-    final subTitleText =
+    String subTitleText =
         cardType != '' ? "$characterName\n$cardType" : characterName;
+
+    if (translatedName != originalName) {
+      subTitleText = '$translatedName\n$subTitleText';
+    }
 
     final normalUrl =
         assetbundleName != null
-            ? "https://storage.sekai.best/sekai-jp-assets/character/member/$assetbundleName/card_normal.webp"
+            ? "${AppGlobals.assetUrl}/character/member/$assetbundleName/card_normal.webp"
             : null;
     String? trainedUrl;
     if (rarity == 'rarity_3' || rarity == 'rarity_4') {
       trainedUrl =
           assetbundleName != null
-              ? "https://storage.sekai.best/sekai-jp-assets/character/member/$assetbundleName/card_after_training.webp"
+              ? "${AppGlobals.assetUrl}/character/member/$assetbundleName/card_after_training.webp"
               : null;
     }
     bool jumpToTrainedImage = false;
@@ -224,7 +236,7 @@ class _CardIndexPageState extends State<CardIndexPage> {
           context: context,
           id: cardId!,
           top: top,
-          title: displayCardName!.combined,
+          title: originalName,
           subtitle: subTitleText,
           pageBuilder:
               (id) => CardDetailPage(
