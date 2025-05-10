@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:path/path.dart' as p;
 import 'package:pjsk_viewer/i18n/app_localizations.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
 import 'package:pjsk_viewer/utils/globals.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart' show Phoenix;
-import 'package:sqflite/sqflite.dart';
 import 'package:pjsk_viewer/utils/database/database.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
@@ -21,6 +19,9 @@ class _SettingsPageState extends State<SettingsPage> {
   // pending changes to apply
   final Map<String, dynamic> _pending = {};
 
+  // Controllers for URL text fields
+  final Map<String, TextEditingController> _urlControllers = {};
+
   @override
   void initState() {
     super.initState();
@@ -34,6 +35,13 @@ class _SettingsPageState extends State<SettingsPage> {
       _initial['db_update_interval_days'] =
           prefs.getInt('db_update_interval_days') ?? 7;
       _initial['region'] = prefs.getString('region') ?? AppGlobals.region;
+
+      // Load URL settings
+      _initial['database_url'] = prefs.getString('database_url');
+      _initial['asset_url'] = prefs.getString('asset_url');
+      _initial['localization_url'] = prefs.getString('localization_url');
+      _initial['api_url'] = prefs.getString('api_url');
+      _initial['news_url'] = prefs.getString('news_url');
     });
   }
 
@@ -54,7 +62,7 @@ class _SettingsPageState extends State<SettingsPage> {
       final value = entry.value;
       if (value is String) {
         await prefs.setString(key, value);
-        if (key == 'app_locale') needsRestart = true;
+        if (key == 'app_locale' || key.contains('url')) needsRestart = true;
         if (key == 'region') needsReinit = true;
       } else if (value is bool) {
         await prefs.setBool(key, value);
@@ -62,6 +70,8 @@ class _SettingsPageState extends State<SettingsPage> {
         await prefs.setInt(key, value);
       }
     }
+
+    await _loadSettings();
 
     if (needsRestart && mounted) {
       showDialog(
@@ -91,10 +101,47 @@ class _SettingsPageState extends State<SettingsPage> {
     if (needsReinit && mounted) {
       // Reinitialize the database
       await clearDatabase();
+
+      // Clear all URL-related preferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('database_url');
+      await prefs.remove('asset_url');
+      await prefs.remove('localization_url');
+      await prefs.remove('api_url');
+      await prefs.remove('news_url');
       if (mounted) {
         Phoenix.rebirth(context);
       }
     }
+  }
+
+  // Helper method to build URL text fields
+  Widget _buildUrlTextField(String key, String defaultValue, String hint) {
+    _urlControllers[key] ??= TextEditingController();
+    _urlControllers[key]!.text = _pending[key] ?? _initial[key] ?? defaultValue;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: TextField(
+        controller: _urlControllers[key],
+        decoration: InputDecoration(
+          labelText: key,
+          hintText: hint,
+          border: OutlineInputBorder(),
+          suffixIcon: IconButton(
+            icon: Icon(Icons.refresh),
+            tooltip: 'Reset to default',
+            onPressed: () {
+              _urlControllers[key]!.text = defaultValue;
+              setState(() => _pending[key] = defaultValue);
+            },
+          ),
+        ),
+        onChanged: (value) {
+          setState(() => _pending[key] = value);
+        },
+      ),
+    );
   }
 
   @override
@@ -274,6 +321,50 @@ class _SettingsPageState extends State<SettingsPage> {
                   onChanged: (v) {
                     setState(() => _pending['db_update_interval_days'] = v!);
                   },
+                ),
+              ),
+            ],
+          ), // URL Settings section
+          ExpansionTile(
+            title: Text(
+              l10n.translate('settings_api_title'),
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            children: [
+              _buildUrlTextField(
+                'database_url',
+                'https://sekai-world.github.io',
+                'URL for database resources',
+              ),
+              _buildUrlTextField(
+                'asset_url',
+                'https://storage.sekai.best',
+                'URL for image and asset resources',
+              ),
+              _buildUrlTextField(
+                'localization_url',
+                'https://i18n-json.sekai.best',
+                'URL for localization resources',
+              ),
+              _buildUrlTextField(
+                'api_url',
+                'https://api.sekai.best',
+                'URL for API endpoints',
+              ),
+              _buildUrlTextField(
+                'news_url',
+                AppGlobals.newsUrl,
+                'URL for news content',
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  l10n.translate('settings_api_note'),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.grey[600],
+                  ),
                 ),
               ),
             ],

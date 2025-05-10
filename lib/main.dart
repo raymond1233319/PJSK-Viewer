@@ -82,8 +82,8 @@ class _AppInitializerState extends State<AppInitializer> {
           '${AppGlobals.databaseUrl}/sekai-master-db-$region-diff';
     }
     AppGlobals.assetUrl = '${AppGlobals.assetUrl}/sekai-$region-assets';
-    if (prefs.getString('new_url') != null) {
-      AppGlobals.newsUrl = prefs.getString('new_url')!;
+    if (prefs.getString('news_url') != null) {
+      AppGlobals.newsUrl = prefs.getString('news_url')!;
     } else {
       switch (AppGlobals.region) {
         case 'jp':
@@ -97,6 +97,10 @@ class _AppInitializerState extends State<AppInitializer> {
           AppGlobals.newsUrl = '';
       }
     }
+    developer.log(
+      'AppGlobals: ${AppGlobals.databaseUrl}, ${AppGlobals.assetUrl}, ${AppGlobals.localizationUrl}, ${AppGlobals.apiUrl}, ${AppGlobals.region}',
+      name: 'AppGlobals',
+    );
   }
 
   @override

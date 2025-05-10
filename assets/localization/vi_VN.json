@@ -16,7 +16,8 @@
   "gacha_festival": "Festival Giới hạn",
   "gacha_birthday": "Sinh nhật",
   "other": "Khác",
-  "mixed": "Hỗn hợp",  "view": "Xem",
+  "mixed": "Hỗn hợp",
+  "view": "Xem",
   "close": "Đóng",
   "about_title": "Về ứng dụng",
   "about_description": "PJSK Viewer là một ứng dụng mã nguồn mở để xem dữ liệu trò chơi Project Sekai (PJSK), bao gồm thẻ, sự kiện, gacha và thông tin âm nhạc.",
@@ -77,11 +78,14 @@
   "genre": "Thể loại",
   "sub_genre": "Thể loại phụ",
   "tag": "Thẻ",
-  "cost": "Chi phí",  "is_enable_sketch": "Có thể vẽ phác thảo",
+  "cost": "Chi phí",
+  "is_enable_sketch": "Có thể vẽ phác thảo",
   "is_obtained_by_convert": "Có thể nhận được bằng cách chuyển đổi",
   "is_asssembled": "Có thể lắp ráp",
   "is_disassembled": "Có thể tháo rời",
   "limit": "Giới hạn",
   "yes": "Có",
-  "no": "Không"
+  "no": "Không",
+  "settings_api_title": "Cài đặt API và URL",
+  "settings_api_note": "Lưu ý: Các điểm cuối mặc định được cung cấp bởi Sekai Viewer. Thay đổi các URL này đòi hỏi khởi động lại ứng dụng để có hiệu lực đầy đủ."
 }
