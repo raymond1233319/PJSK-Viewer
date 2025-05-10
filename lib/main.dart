@@ -82,10 +82,21 @@ class _AppInitializerState extends State<AppInitializer> {
           '${AppGlobals.databaseUrl}/sekai-master-db-$region-diff';
     }
     AppGlobals.assetUrl = '${AppGlobals.assetUrl}/sekai-$region-assets';
-    developer.log('Database URL: ${AppGlobals.databaseUrl}');
-    developer.log('Asset URL: ${AppGlobals.assetUrl}');
-    developer.log('Localization URL: ${AppGlobals.localizationUrl}');
-    developer.log('API URL: ${AppGlobals.apiUrl}');
+    if (prefs.getString('new_url') != null) {
+      AppGlobals.newsUrl = prefs.getString('new_url')!;
+    } else {
+      switch (AppGlobals.region) {
+        case 'jp':
+          AppGlobals.newsUrl =
+              'https://production-web.sekai.colorfulpalette.org/';
+          break;
+        case 'en':
+          AppGlobals.newsUrl = 'https://n-production-web.sekai-en.com/';
+          break;
+        default:
+          AppGlobals.newsUrl = '';
+      }
+    }
   }
 
   @override

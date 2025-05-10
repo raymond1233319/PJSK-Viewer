@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pjsk_viewer/i18n/app_localizations.dart';
+import 'package:pjsk_viewer/pages/about.dart';
 import 'package:pjsk_viewer/pages/card_index.dart';
 import 'package:pjsk_viewer/pages/event_tracker.dart';
 import 'package:pjsk_viewer/pages/music_index.dart';
@@ -135,6 +136,12 @@ class HomePage extends StatelessWidget {
                           'settings',
                           const SettingsPage(),
                           innerKey: 'title',
+                        ),
+                        _buildMenuItem(
+                          context,
+                          Icons.info_outline,
+                          'about',
+                          const AboutPage(),
                         ),
                       ],
                     );
@@ -811,13 +818,16 @@ class _NewsWidgetState extends State<NewsWidget> {
   }
 
   // Function to handle tapping on a news item
-  Future<void> _launchNewsUrl(String path, String tag) async {
+  Future<void> _launchNewsUrl(String path, String browseType) async {
     Uri? uri;
     // Handle truly external links
-    uri = Uri.tryParse(
-      'https://production-web.sekai.colorfulpalette.org/$path',
-    );
-    if (uri != null && await canLaunchUrl(uri)) {
+    if (browseType == 'external') {
+      uri = Uri.tryParse(path);
+    } else {
+      uri = Uri.tryParse('${AppGlobals.newsUrl}$path');
+    }
+    developer.log('Launching URL: $uri');
+    if (uri != null) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
@@ -874,7 +884,7 @@ class _NewsWidgetState extends State<NewsWidget> {
                         onTap:
                             () => _launchNewsUrl(
                               item['path'] ?? '',
-                              item['tag'] ?? '',
+                              item['browseType'] ?? '',
                             ),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                       ),
