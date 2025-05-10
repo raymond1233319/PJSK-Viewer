@@ -1,17 +1,13 @@
 import 'dart:convert';
-import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:intl/intl.dart';
 import 'package:pjsk_viewer/i18n/app_localizations.dart';
-import 'package:pjsk_viewer/pages/gacha_detail.dart';
 import 'package:pjsk_viewer/pages/index.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
 import 'package:pjsk_viewer/pages/mysekai_fixture_detail.dart';
-import 'package:pjsk_viewer/utils/helper.dart';
 import 'package:pjsk_viewer/utils/database/my_sekai_database.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:pjsk_viewer/utils/globals.dart';
 class MySekaiIndexPage extends StatefulWidget {
   const MySekaiIndexPage({super.key});
 
@@ -64,8 +60,7 @@ class _MySekaiIndexPageState extends State<MySekaiIndexPage> {
     final String fixtureAssetName = fixture['assetbundleName'] as String? ?? '';
     final String type = fixture['mysekaiFixtureType'];
     final String layoutType = fixture['mysekaiSettableLayoutType'];
-    final String assetBaseUrl =
-        'https://storage.sekai.best/sekai-jp-assets/mysekai/thumbnail';
+    final String assetBaseUrl = '${AppGlobals.assetUrl}/mysekai/thumbnail';
     final thumbnailUrl =
         type != 'surface_appearance'
             ? '$assetBaseUrl/fixture/${fixtureAssetName}_1.webp'

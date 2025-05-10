@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
+import 'package:pjsk_viewer/utils/globals.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -203,7 +204,7 @@ class MusicDatabase {
     try {
       final response = await http.get(
         Uri.parse(
-          'https://sekai-world.github.io/sekai-master-db-diff/outsideCharacters.json',
+          '${AppGlobals.databaseUrl}/outsideCharacters.json',
         ),
       );
       if (response.statusCode == 200) {

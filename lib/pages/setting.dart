@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:pjsk_viewer/i18n/app_localizations.dart';
+import 'package:pjsk_viewer/i18n/localizations.dart';
+import 'package:pjsk_viewer/utils/globals.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart' show Phoenix;
 import 'package:sqflite/sqflite.dart';
@@ -31,6 +33,7 @@ class _SettingsPageState extends State<SettingsPage> {
       _initial['app_locale'] = prefs.getString('app_locale') ?? 'en';
       _initial['db_update_interval_days'] =
           prefs.getInt('db_update_interval_days') ?? 7;
+      _initial['region'] = prefs.getString('region') ?? AppGlobals.region;
     });
   }
 
@@ -40,6 +43,7 @@ class _SettingsPageState extends State<SettingsPage> {
     }
     final prefs = await SharedPreferences.getInstance();
     bool needsRestart = false;
+    bool needsReinit = false;
     AppLocalizations? l10n;
     if (mounted) {
       l10n = AppLocalizations.of(context);
@@ -51,6 +55,7 @@ class _SettingsPageState extends State<SettingsPage> {
       if (value is String) {
         await prefs.setString(key, value);
         if (key == 'app_locale') needsRestart = true;
+        if (key == 'region') needsReinit = true;
       } else if (value is bool) {
         await prefs.setBool(key, value);
       } else if (value is int) {
@@ -83,12 +88,22 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
       );
     }
+    if (needsReinit && mounted) {
+      // Reinitialize the database
+      await clearDatabase();
+      if (mounted) {
+        Phoenix.rebirth(context);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final selectedCode =
+    final i18n = ContentLocalizations.of(context);
+    // Supported regions
+    final List<String> supportedRegions = ['jp', 'en', 'kr', 'tw', 'cn'];
+    final selectedLocaleCode =
         _pending['app_locale'] ??
         _initial['app_locale'] ??
         supportedLocales.first.code;
@@ -96,6 +111,11 @@ class _SettingsPageState extends State<SettingsPage> {
         _pending['db_update_interval_days'] as int? ??
         _initial['db_update_interval_days'] as int? ??
         1;
+    final selectedRegionCode =
+        _pending['region'] as String? ??
+        _initial['region'] as String? ??
+        AppGlobals.region;
+
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -120,6 +140,31 @@ class _SettingsPageState extends State<SettingsPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Region selection
+          ExpansionTile(
+            title: Text(
+              i18n!.translate('common', 'serverRegionSelect').translated,
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            initiallyExpanded: _pending.containsKey('region'),
+            children:
+                supportedRegions.map((region) {
+                  return RadioListTile<String>(
+                    title: Text(
+                      i18n
+                          .translate('common', 'serverRegion', innerKey: region)
+                          .translated,
+                    ),
+                    value: region,
+                    groupValue: selectedRegionCode,
+                    onChanged: (v) {
+                      if (v != null) setState(() => _pending['region'] = v);
+                    },
+                    contentPadding: EdgeInsets.zero,
+                  );
+                }).toList(),
+          ),
+
           // Locale selection
           ExpansionTile(
             title: Text(
@@ -129,11 +174,9 @@ class _SettingsPageState extends State<SettingsPage> {
             children:
                 supportedLocales.map((supportedLocale) {
                   return RadioListTile<String>(
-                    title: Text(
-                      supportedLocale.name,
-                    ), // Assuming Locale name is already localized or standard
+                    title: Text(supportedLocale.name),
                     value: supportedLocale.code,
-                    groupValue: selectedCode,
+                    groupValue: selectedLocaleCode,
                     onChanged: (v) {
                       setState(() => _pending['app_locale'] = v!);
                     },
@@ -169,6 +212,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   }
                 },
               ),
+
+              // Datebase reinitialization
               ListTile(
                 leading: const Icon(Icons.restart_alt),
                 title: Text(l10n.translate('settings_reinit_db')),
@@ -182,16 +227,31 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                     );
                   }
-                  final path = p.join(
-                    await getDatabasesPath(),
-                    'pjsk_viewer.db',
-                  );
-                  await deleteDatabase(path);
+                  await clearDatabase();
                   if (mounted) {
                     updateDatabase(context);
                   }
                 },
               ),
+
+              // Database update
+              ListTile(
+                leading: const Icon(Icons.update),
+                title: Text(l10n.translate('settings_update_db')),
+                onTap: () async {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          l10n.translate('settings_update_db_started_message'),
+                        ),
+                      ),
+                    );
+                    updateDatabase(context);
+                  }
+                },
+              ),
+
               // Auto‑update interval selector
               ListTile(
                 title: Text(l10n.translate('settings_auto_update_interval')),

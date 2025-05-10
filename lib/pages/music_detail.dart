@@ -6,7 +6,7 @@ import 'package:pjsk_viewer/utils/audio_service.dart';
 import 'package:pjsk_viewer/utils/database/music_database.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
 import 'package:pjsk_viewer/utils/detail_builder.dart';
-
+import 'package:pjsk_viewer/utils/globals.dart';
 class MusicDetailPage extends StatefulWidget {
   final int musicId;
   const MusicDetailPage({required this.musicId, super.key});
@@ -58,8 +58,7 @@ class _MusicDetailPageState extends State<MusicDetailPage> {
   void _loadSelectedVocal() {
     final vocal = _vocals[_selectedVocalIndex!];
     final bundle = vocal['assetbundleName'] as String;
-    final url =
-        'https://storage.sekai.best/sekai-jp-assets/music/long/$bundle/$bundle.mp3';
+    final url = '${AppGlobals.assetUrl}/music/long/$bundle/$bundle.mp3';
     _audioService.loadAudio(url, skipSeconds: _musicDetails?["fillerSec"] ?? 0);
   }
 
@@ -71,7 +70,7 @@ class _MusicDetailPageState extends State<MusicDetailPage> {
     final assetbundleName = _musicDetails?['assetbundleName'] as String? ?? '';
     final logoUrl =
         assetbundleName.isNotEmpty
-            ? 'https://storage.sekai.best/sekai-jp-assets/music/jacket/$assetbundleName/$assetbundleName.webp'
+            ? '${AppGlobals.assetUrl}/music/jacket/$assetbundleName/$assetbundleName.webp'
             : '';
 
     return Scaffold(

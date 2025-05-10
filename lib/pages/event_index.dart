@@ -8,6 +8,7 @@ import 'package:pjsk_viewer/pages/event_detail.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
 import 'package:pjsk_viewer/pages/index.dart';
 import 'package:pjsk_viewer/utils/database/event_database.dart';
+import 'package:pjsk_viewer/utils/globals.dart';
 
 class EventPage extends StatefulWidget {
   const EventPage({super.key});
@@ -59,15 +60,18 @@ class _EventPageState extends State<EventPage> {
     final originalName =
         event['name'] ??
         AppLocalizations.of(context).translate('unknown_event');
-    final localizedName =
-        localizations
-            ?.translate('event_name', eventId?.toString() ?? '')
-            .translated ??
-        originalName;
+
+    LocalizedText? title = localizations?.translate(
+      'event_name',
+      eventId!.toString(),
+    );
+    final tranlatedName =
+        AppGlobals.region == 'jp' ? title?.translated : title?.japanese;
+
     final assetbundleName = event['assetbundleName'] ?? '';
     final logoUrl =
         (assetbundleName != null && assetbundleName.isNotEmpty)
-            ? "https://storage.sekai.best/sekai-jp-assets/event/$assetbundleName/logo/logo.webp"
+            ? "${AppGlobals.assetUrl}/event/$assetbundleName/logo/logo.webp"
             : null;
     final DateFormat formatter = DateFormat("dd/MM/yyyy HH:mm:ss");
 
@@ -84,7 +88,12 @@ class _EventPageState extends State<EventPage> {
             ?.translate('event', "type", innerKey: eventType)
             .translated ??
         eventType;
-    final subTitleText = "$eventTypeDisplay\n$startDateStr ~ \n$endDateStr";
+
+    final subTitleText =
+        originalName != tranlatedName
+            ? "${title!.translated}\n$eventTypeDisplay\n$startDateStr ~ \n$endDateStr"
+            : "$eventTypeDisplay\n$startDateStr ~ \n$endDateStr\n";
+
     final Widget top = Stack(
       children: [
         logoUrl != null
@@ -132,7 +141,7 @@ class _EventPageState extends State<EventPage> {
       context: context,
       id: eventId!,
       top: top,
-      title: localizedName,
+      title: originalName,
       subtitle: subTitleText,
       pageBuilder: (id) => EventDetailPage(eventId: id),
     );

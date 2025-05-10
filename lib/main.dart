@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
@@ -7,6 +8,7 @@ import 'package:pjsk_viewer/pages/home.dart';
 import 'package:pjsk_viewer/utils/database/database.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pjsk_viewer/utils/globals.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +34,7 @@ class _AppInitializerState extends State<AppInitializer> {
   }
 
   Future<void> _initAll() async {
+    await setLink();
     await _setLocale();
     await databaseInitialization((msg) {
       setState(() => _logs.add(msg));
@@ -59,6 +62,30 @@ class _AppInitializerState extends State<AppInitializer> {
     _initialLocale = match.locale;
     // save locale to shared preferences
     await prefs.setString('app_locale', match.code);
+  }
+
+  Future<void> setLink() async {
+    final prefs = await SharedPreferences.getInstance();
+    AppGlobals.reset();
+    AppGlobals.region = prefs.getString('region') ?? 'jp';
+    final String region = AppGlobals.region == 'tw' ? 'tc' : AppGlobals.region;
+    AppGlobals.databaseUrl =
+        prefs.getString('database_url') ?? AppGlobals.databaseUrl;
+    AppGlobals.assetUrl = prefs.getString('asset_url') ?? AppGlobals.assetUrl;
+    AppGlobals.localizationUrl =
+        prefs.getString('localization_url') ?? AppGlobals.localizationUrl;
+    AppGlobals.apiUrl = prefs.getString('api_url') ?? AppGlobals.apiUrl;
+    if (AppGlobals.region == 'jp') {
+      AppGlobals.databaseUrl = '${AppGlobals.databaseUrl}/sekai-master-db-diff';
+    } else {
+      AppGlobals.databaseUrl =
+          '${AppGlobals.databaseUrl}/sekai-master-db-$region-diff';
+    }
+    AppGlobals.assetUrl = '${AppGlobals.assetUrl}/sekai-$region-assets';
+    developer.log('Database URL: ${AppGlobals.databaseUrl}');
+    developer.log('Asset URL: ${AppGlobals.assetUrl}');
+    developer.log('Localization URL: ${AppGlobals.localizationUrl}');
+    developer.log('API URL: ${AppGlobals.apiUrl}');
   }
 
   @override

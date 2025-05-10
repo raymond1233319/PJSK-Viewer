@@ -13,6 +13,7 @@ import 'package:pjsk_viewer/pages/setting.dart';
 import 'package:pjsk_viewer/utils/database/database.dart';
 import 'package:pjsk_viewer/utils/database/event_database.dart';
 import 'package:pjsk_viewer/utils/detail_builder.dart';
+import 'package:pjsk_viewer/utils/globals.dart';
 import 'package:pjsk_viewer/utils/helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:marquee/marquee.dart';
@@ -121,12 +122,13 @@ class HomePage extends StatelessWidget {
                           'eventTracker',
                           const EventTrackerPage(),
                         ),
-                        _buildMenuItem(
-                          context,
-                          Icons.home,
-                          'my_sekai',
-                          const MySekaiIndexPage(),
-                        ),
+                        if (AppGlobals.region == 'jp')
+                          _buildMenuItem(
+                            context,
+                            Icons.home,
+                            'my_sekai',
+                            const MySekaiIndexPage(),
+                          ),
                         _buildMenuItem(
                           context,
                           Icons.settings,
@@ -157,27 +159,9 @@ class HomePage extends StatelessWidget {
 class CurrentEvent extends StatelessWidget {
   const CurrentEvent({super.key});
 
-  Future<Map<String, dynamic>> fetchCurrentEvent() async {
+  Future<Map<String, dynamic>?> fetchCurrentEvent() async {
     try {
-      final response = await http.get(
-        Uri.parse("https://strapi.sekai.best/sekai-current-event"),
-      );
-
-      if (response.statusCode == 200) {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString("current_event", response.body);
-        return json.decode(response.body);
-      } else {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        final sharedEventJson = prefs.getString("current_event");
-        if (sharedEventJson != null) {
-          return json.decode(sharedEventJson) as Map<String, dynamic>;
-        } else {
-          throw Exception(
-            "Failed to load current event (status code: ${response.statusCode}) and no shared event found",
-          );
-        }
-      }
+      return EventDatabase.getCurrentEvent();
     } catch (e) {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       final sharedEventJson = prefs.getString("current_event");
@@ -191,38 +175,35 @@ class CurrentEvent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Map<String, dynamic>>(
+    final localizations = ContentLocalizations.of(context);
+    return FutureBuilder<Map<String, dynamic>?>(
       future: fetchCurrentEvent(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const CircularProgressIndicator();
         } else if (snapshot.hasError) {
           return Text("Error: ${snapshot.error}");
+        } else if (snapshot.data == null) {
+          return Text(
+            localizations?.translate('event', 'alreadyEnded').translated ??
+                "Event has ended",
+            style: const TextStyle(fontSize: 20),
+          );
         } else {
-          final localizations = ContentLocalizations.of(context);
           final eventData = snapshot.data;
-          final endAt = eventData?['eventJson']?['aggregateAt'];
-          final now = DateTime.now().millisecondsSinceEpoch;
-          if (endAt != null && now > endAt) {
-            return Text(
-              localizations?.translate('event', 'alreadyEnded').translated ??
-                  "Event has ended",
-              style: const TextStyle(fontSize: 20),
-            );
-          }
-          final int eventId = eventData?['eventJson']?['id'];
+          final int eventId = eventData?['id'];
+          final int endAt = eventData?['aggregateAt'];
           final eventName =
-              eventData?['eventJson']?['name'] ??
+              eventData?['name'] ??
               AppLocalizations.of(context).translate('unknown_event');
           String localizedEventName =
               ContentLocalizations.of(
                 context,
               )?.translate('event_name', eventId.toString()).combined ??
               eventName;
-          final assetbundleName =
-              eventData?['eventJson']?['assetbundleName'] ?? '';
+          final assetbundleName = eventData?['assetbundleName'] ?? '';
           final bannerUrl =
-              "https://storage.sekai.best/sekai-jp-assets/home/banner/$assetbundleName/$assetbundleName.webp";
+              "${AppGlobals.assetUrl}/home/banner/$assetbundleName/$assetbundleName.webp";
 
           return Column(
             mainAxisSize: MainAxisSize.min,
@@ -312,87 +293,85 @@ class CurrentEvent extends StatelessWidget {
               ),
 
               // Timer
-              if (endAt != null)
-                Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  margin: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          localizations!
-                              .translate('event', "remainingTime")
-                              .translated,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+              Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                margin: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        localizations!
+                            .translate('event', "remainingTime")
+                            .translated,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Divider(),
+                      Center(
+                        child: Transform.scale(
+                          scale: 1.2,
+                          child: TimerCountdown(
+                            format:
+                                CountDownTimerFormat.daysHoursMinutesSeconds,
+                            endTime: DateTime.fromMillisecondsSinceEpoch(endAt),
+                            onEnd:
+                                () => Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  ).translate('event_has_ended'),
+                                ),
+                            daysDescription:
+                                localizations
+                                    .translate(
+                                      'common',
+                                      'countdown',
+                                      innerKey: 'day',
+                                    )
+                                    .translated ??
+                                'd',
+                            hoursDescription:
+                                localizations
+                                    .translate(
+                                      'common',
+                                      'countdown',
+                                      innerKey: 'hour',
+                                    )
+                                    .translated ??
+                                'h',
+                            minutesDescription:
+                                localizations
+                                    .translate(
+                                      'common',
+                                      'countdown',
+                                      innerKey: 'minute',
+                                    )
+                                    .translated ??
+                                'm',
+                            secondsDescription:
+                                localizations
+                                    .translate(
+                                      'common',
+                                      'countdown',
+                                      innerKey: 'second',
+                                    )
+                                    .translated ??
+                                's',
                           ),
                         ),
-                        const Divider(),
-                        Center(
-                          child: Transform.scale(
-                            scale: 1.2,
-                            child: TimerCountdown(
-                              format:
-                                  CountDownTimerFormat.daysHoursMinutesSeconds,
-                              endTime: DateTime.fromMillisecondsSinceEpoch(
-                                endAt,
-                              ),
-                              onEnd:
-                                  () => Text(
-                                    AppLocalizations.of(
-                                      context,
-                                    ).translate('event_has_ended'),
-                                  ),
-                              daysDescription:
-                                  localizations
-                                      .translate(
-                                        'common',
-                                        'countdown',
-                                        innerKey: 'day',
-                                      )
-                                      .translated ??
-                                  'd',
-                              hoursDescription:
-                                  localizations
-                                      .translate(
-                                        'common',
-                                        'countdown',
-                                        innerKey: 'hour',
-                                      )
-                                      .translated ??
-                                  'h',
-                              minutesDescription:
-                                  localizations
-                                      .translate(
-                                        'common',
-                                        'countdown',
-                                        innerKey: 'minute',
-                                      )
-                                      .translated ??
-                                  'm',
-                              secondsDescription:
-                                  localizations
-                                      .translate(
-                                        'common',
-                                        'countdown',
-                                        innerKey: 'second',
-                                      )
-                                      .translated ??
-                                  's',
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
+              ),
               // Live Ranking
-              LiveRankingSelector(eventData: eventData),
+              if (AppGlobals.region != 'cn')
+                LiveRankingSelector(eventData: eventData),
             ],
           );
         }
@@ -433,7 +412,8 @@ class _LiveRankingSelectorState extends State<LiveRankingSelector> {
   }
 
   Future<List<Map<String, dynamic>>> _fetchLiveRanking() async {
-    if (widget.eventData?['eventJson']?['eventType'] == "world_bloom") {
+    if (widget.eventData?['eventType'] == "world_bloom" &&
+        AppGlobals.region == 'jp') {
       final pref = await SharedPreferences.getInstance();
       List<dynamic> worldBlooms = json.decode(
         pref.getString('worldBlooms') ?? '[]',
@@ -449,7 +429,7 @@ class _LiveRankingSelectorState extends State<LiveRankingSelector> {
         }
       }
     }
-    return fetchEventRanking(widget.eventData?['eventId'], _chapterId);
+    return fetchEventRanking(widget.eventData?['id'], _chapterId);
   }
 
   @override
@@ -595,9 +575,7 @@ class _VersionInfoState extends State<VersionInfo> {
   Future<void> _loadVersionInfo() async {
     try {
       final response = await http.get(
-        Uri.parse(
-          "https://sekai-world.github.io/sekai-master-db-diff/versions.json",
-        ),
+        Uri.parse("${AppGlobals.databaseUrl}/versions.json"),
       );
 
       if (response.statusCode == 200) {
@@ -777,9 +755,7 @@ class _NewsWidgetState extends State<NewsWidget> {
     });
     try {
       final response = await http.get(
-        Uri.parse(
-          'https://sekai-world.github.io/sekai-master-db-diff/userInformations.json',
-        ),
+        Uri.parse('${AppGlobals.databaseUrl}/userInformations.json'),
       );
       if (response.statusCode == 200) {
         final List<dynamic> decodedData = json.decode(response.body);

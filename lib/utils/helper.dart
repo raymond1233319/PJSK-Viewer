@@ -10,6 +10,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart' as perm;
+import 'package:pjsk_viewer/utils/globals.dart';
 import 'package:share_plus/share_plus.dart';
 
 class MarqueeText extends StatefulWidget {
@@ -335,7 +336,7 @@ Future<List<Map<String, dynamic>>> fetchEventRanking(
           ? await () async {
             final timeResp = await http.get(
               Uri.parse(
-                'https://api.sekai.best/event/$eventId/chapter_rankings/time?charaId=$characterId&region=jp',
+                '${AppGlobals.apiUrl}/event/$eventId/chapter_rankings/time?charaId=$characterId&region=${AppGlobals.region}',
               ),
             );
             final times =
@@ -343,13 +344,13 @@ Future<List<Map<String, dynamic>>> fetchEventRanking(
                     as List;
             final ts = times.last as String;
             return Uri.parse(
-              'https://api.sekai.best/event/$eventId/chapter_rankings?charaId=$characterId&region=jp&timestamp=$ts',
+              '${AppGlobals.apiUrl}/event/$eventId/chapter_rankings?charaId=$characterId&region=${AppGlobals.region}&timestamp=$ts',
             );
           }()
           : await () async {
             final timeResp = await http.get(
               Uri.parse(
-                'https://api.sekai.best/event/$eventId/rankings/time?region=jp',
+                '${AppGlobals.apiUrl}/event/$eventId/rankings/time?region=${AppGlobals.region}',
               ),
             );
             final times =
@@ -357,7 +358,7 @@ Future<List<Map<String, dynamic>>> fetchEventRanking(
                     as List;
             final ts = times.last as String;
             return Uri.parse(
-              'https://api.sekai.best/event/$eventId/rankings?region=jp&timestamp=$ts',
+              '${AppGlobals.apiUrl}/event/$eventId/rankings?region=${AppGlobals.region}&timestamp=$ts',
             );
           }();
   final respone = await http.get(uri);
@@ -370,4 +371,11 @@ Future<List<Map<String, dynamic>>> fetchEventRanking(
   } else {
     throw Exception('Error: ${respone.statusCode}');
   }
+}
+
+LocalizedText replaceMainText(LocalizedText original, String mainText) {
+  return LocalizedText(
+    japaneseText: mainText,
+    translatedText: original.japanese,
+  );
 }
