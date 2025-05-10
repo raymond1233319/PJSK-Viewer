@@ -87,5 +87,10 @@
   "yes": "Tak",
   "no": "Nie",
   "settings_api_title": "Ustawienia API i URL",
-  "settings_api_note": "Uwaga: Domyślne punkty końcowe są dostarczane przez Sekai Viewer. Zmiana tych adresów URL wymaga ponownego uruchomienia aplikacji, aby w pełni zadziałać."
+  "settings_api_note": "Uwaga: Domyślne punkty końcowe są dostarczane przez Sekai Viewer. Zmiana tych adresów URL wymaga ponownego uruchomienia aplikacji, aby w pełni zadziałać.",
+  "score_up_keep": "Zwiększenie wyniku (do GOOD lub niżej)",
+  "sub_unit_score_up": "Zwiększenie wyniku jednostki",
+  "score_up_character_rank": "Zwiększenie wyniku rangą postaci",
+  "other_member_score_up_reference_rate": "Zwiększenie wyniku innych członków",
+  "score_up_unit_count": "Zwiększenie wyniku liczbą jednostek"
 }

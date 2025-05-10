@@ -87,5 +87,10 @@
   "is_disassembled": "Se puede desmontar",
   "limit": "Límite",
   "yes": "Sí",
-  "no": "No"
+  "no": "No",
+  "score_up_keep": "Aumento de Puntuación (Hasta GOOD o menor)",
+  "sub_unit_score_up": "Aumento de Puntuación por Unidad",
+  "score_up_character_rank": "Aumento de Puntuación por Rango de Personaje",
+  "other_member_score_up_reference_rate": "Aumento de Puntuación de Otros Miembros",
+  "score_up_unit_count": "Aumento de Puntuación por Cantidad de Unidades"
 }

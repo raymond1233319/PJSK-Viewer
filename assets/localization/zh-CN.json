@@ -87,5 +87,10 @@
   "yes": "是",
   "no": "否",
   "settings_api_title": "API和URL设置",
-  "settings_api_note": "注意：默认端点由Sekai Viewer提供。更改这些URL需要重新启动应用程序才能完全生效。"
+  "settings_api_note": "注意：默认端点由Sekai Viewer提供。更改这些URL需要重新启动应用程序才能完全生效。",
+  "score_up_keep": "分数提升 (直到GOOD以下)",
+  "sub_unit_score_up": "组合分数提升",
+  "score_up_character_rank": "角色等级分数提升",
+  "other_member_score_up_reference_rate": "其他成员分数提升",
+  "score_up_unit_count": "组合数量分数提升"
 }

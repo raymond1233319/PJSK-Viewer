@@ -87,5 +87,10 @@
   "yes": "Ya",
   "no": "Tidak",
   "settings_api_title": "Pengaturan API dan URL",
-  "settings_api_note": "Catatan: Titik akhir default disediakan oleh Sekai Viewer. Mengubah URL ini memerlukan restart aplikasi agar benar-benar berlaku."
+  "settings_api_note": "Catatan: Titik akhir default disediakan oleh Sekai Viewer. Mengubah URL ini memerlukan restart aplikasi agar benar-benar berlaku.",
+  "score_up_keep": "Skor Naik (Sampai GOOD atau lebih rendah)",
+  "sub_unit_score_up": "Peningkatan Skor Unit",
+  "score_up_character_rank": "Peningkatan Skor Rank Karakter",
+  "other_member_score_up_reference_rate": "Peningkatan Skor Anggota Lain",
+  "score_up_unit_count": "Peningkatan Skor Jumlah Unit"
 }

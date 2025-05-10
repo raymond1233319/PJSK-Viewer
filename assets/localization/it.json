@@ -87,5 +87,10 @@
   "yes": "Sì",
   "no": "No",
   "settings_api_title": "Impostazioni API e URL",
-  "settings_api_note": "Nota: Gli endpoint predefiniti sono forniti da Sekai Viewer. La modifica di questi URL richiede il riavvio dell'app per avere pieno effetto."
+  "settings_api_note": "Nota: Gli endpoint predefiniti sono forniti da Sekai Viewer. La modifica di questi URL richiede il riavvio dell'app per avere pieno effetto.",
+  "score_up_keep": "Aumento Punteggio (Fino a GOOD o inferiore)",
+  "sub_unit_score_up": "Incremento Punteggio Unità",
+  "score_up_character_rank": "Incremento Punteggio Rango Personaggio",
+  "other_member_score_up_reference_rate": "Incremento Punteggio Altri Membri",
+  "score_up_unit_count": "Incremento Punteggio per Numero di Unità"
 }

@@ -87,5 +87,10 @@
   "yes": "Ano",
   "no": "Ne",
   "settings_api_title": "Nastavení API a URL",
-  "settings_api_note": "Poznámka: Výchozí koncové body jsou poskytovány Sekai Viewer. Změna těchto URL adres vyžaduje restart aplikace, aby plně vstoupila v platnost."
+  "settings_api_note": "Poznámka: Výchozí koncové body jsou poskytovány Sekai Viewer. Změna těchto URL adres vyžaduje restart aplikace, aby plně vstoupila v platnost.",
+  "score_up_keep": "Zvýšení skóre (až do GOOD nebo nižší)",
+  "sub_unit_score_up": "Zvýšení skóre jednotky",
+  "score_up_character_rank": "Zvýšení skóre podle hodnosti postavy",
+  "other_member_score_up_reference_rate": "Zvýšení skóre ostatních členů",
+  "score_up_unit_count": "Zvýšení skóre podle počtu jednotek"
 }

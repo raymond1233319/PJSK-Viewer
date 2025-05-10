@@ -88,5 +88,10 @@
   "yes": "Sí",
   "no": "No",
   "settings_api_title": "Configuració d'API i URL",
-  "settings_api_note": "Nota: Els punts finals predeterminats són proporcionats per Sekai Viewer. Canviar aquestes URL requereix reiniciar l'aplicació perquè tingui efecte complet."
+  "settings_api_note": "Nota: Els punts finals predeterminats són proporcionats per Sekai Viewer. Canviar aquestes URL requereix reiniciar l'aplicació perquè tingui efecte complet.",
+  "score_up_keep": "Augment de Puntuació (Fins a GOOD o inferior)",
+  "sub_unit_score_up": "Augment de Puntuació d'Unitat",
+  "score_up_character_rank": "Augment de Puntuació per Rang de Personatge",
+  "other_member_score_up_reference_rate": "Augment de Puntuació d'Altres Membres",
+  "score_up_unit_count": "Augment de Puntuació per Quantitat d'Unitats"
 }

@@ -83,5 +83,10 @@
   "is_disassembled": "Peut être désassemblé",
   "limit": "Limite",
   "yes": "Oui",
-  "no": "Non"
+  "no": "Non",
+  "score_up_keep": "Augmentation du Score (Jusqu'à GOOD ou moins)",
+  "sub_unit_score_up": "Boost de Score d'Unité",
+  "score_up_character_rank": "Boost de Score de Rang de Personnage",
+  "other_member_score_up_reference_rate": "Boost de Score d'Autres Membres",
+  "score_up_unit_count": "Boost de Score par Nombre d'Unités"
 }

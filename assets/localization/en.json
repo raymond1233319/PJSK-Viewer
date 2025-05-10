@@ -87,5 +87,10 @@
   "is_disassembled": "Can be disassembled",
   "limit": "Limit",
   "yes": "Yes",
-  "no": "No"
+  "no": "No",
+  "score_up_keep": "Score Up (Until Good or lower)",
+  "sub_unit_score_up": "Unit Score Boost",
+  "score_up_character_rank": "Character Rank Score Boost",
+  "other_member_score_up_reference_rate": "Other Member Score Boost",
+  "score_up_unit_count": "Unit Count Score Boost"
 }

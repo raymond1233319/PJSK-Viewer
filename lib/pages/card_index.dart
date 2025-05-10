@@ -81,6 +81,15 @@ class _CardIndexPageState extends State<CardIndexPage> {
       for (var skill in skills)
         skill['id'] as int: skill['descriptionSpriteName'] as String,
     };
+    idToSkillType[11] = 'perfect_score_up';
+    idToSkillType[12] = 'life_score_up';
+    idToSkillType[13] = 'score_up_keep';
+    for (int i = 15; i <= 19; i++) {
+      idToSkillType[i] = 'sub_unit_score_up';
+    }
+    idToSkillType[22] = 'score_up_character_rank';
+    idToSkillType[23] = 'other_member_score_up_reference_rate';
+    idToSkillType[24] = 'score_up_unit_count';
     if (!mounted) return;
     setState(() {
       _idToSkillType = idToSkillType;
@@ -324,7 +333,20 @@ class _CardIndexPageState extends State<CardIndexPage> {
               localizations?.translate('common', 'skill').translated ?? 'Type',
           options: filterOptions.cardSkillTypeOptions,
           filterFunc: (card, selected) {
-            return selected.contains(_idToSkillType[card['skillId']]);
+            for (String select in selected) {
+              if (select == 'score_up' &&
+                  _idToSkillType[card['skillId']] != 'score_up') {
+                continue;
+              }
+              if (_idToSkillType[card['skillId']]!.contains(select)) {
+                return true;
+              }
+              if (card['specialTrainingSkillId'] != null &&
+                  _idToSkillType[card['specialTrainingSkillId']] == select) {
+                return true;
+              }
+            }
+            return false;
           },
         ),
       ],

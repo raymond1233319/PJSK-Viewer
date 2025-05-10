@@ -87,5 +87,10 @@
   "yes": "Có",
   "no": "Không",
   "settings_api_title": "Cài đặt API và URL",
-  "settings_api_note": "Lưu ý: Các điểm cuối mặc định được cung cấp bởi Sekai Viewer. Thay đổi các URL này đòi hỏi khởi động lại ứng dụng để có hiệu lực đầy đủ."
+  "settings_api_note": "Lưu ý: Các điểm cuối mặc định được cung cấp bởi Sekai Viewer. Thay đổi các URL này đòi hỏi khởi động lại ứng dụng để có hiệu lực đầy đủ.",
+  "score_up_keep": "Tăng điểm (Cho đến GOOD hoặc thấp hơn)",
+  "sub_unit_score_up": "Tăng điểm theo đơn vị",
+  "score_up_character_rank": "Tăng điểm theo cấp độ nhân vật",
+  "other_member_score_up_reference_rate": "Tăng điểm thành viên khác",
+  "score_up_unit_count": "Tăng điểm theo số lượng đơn vị"
 }

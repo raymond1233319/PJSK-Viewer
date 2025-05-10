@@ -87,5 +87,10 @@
   "is_disassembled": "Kann zerlegt werden",
   "limit": "Limit",
   "yes": "Ja",
-  "no": "Nein"
+  "no": "Nein",
+  "score_up_keep": "Punkteerhöhung (Bis GOOD oder niedriger)",
+  "sub_unit_score_up": "Einheit-Punkteboost",
+  "score_up_character_rank": "Charakterrang-Punkteboost",
+  "other_member_score_up_reference_rate": "Andere-Mitglieder-Punkteboost",
+  "score_up_unit_count": "Einheitsanzahl-Punkteboost"
 }

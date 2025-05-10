@@ -87,5 +87,10 @@
   "yes": "예",
   "no": "아니오",
   "settings_api_title": "API 및 URL 설정",
-  "settings_api_note": "참고: 기본 엔드포인트는 Sekai Viewer에서 제공합니다. 이러한 URL을 변경하려면 앱을 다시 시작해야 완전히 적용됩니다."
+  "settings_api_note": "참고: 기본 엔드포인트는 Sekai Viewer에서 제공합니다. 이러한 URL을 변경하려면 앱을 다시 시작해야 완전히 적용됩니다.",
+  "score_up_keep": "점수 업 (GOOD 이하까지 유지)",
+  "sub_unit_score_up": "유닛 점수 부스트",
+  "score_up_character_rank": "캐릭터 랭크 점수 부스트",
+  "other_member_score_up_reference_rate": "다른 멤버 점수 부스트",
+  "score_up_unit_count": "유닛 수 점수 부스트"
 }

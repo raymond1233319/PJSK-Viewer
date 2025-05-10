@@ -87,5 +87,10 @@
   "yes": "Ya",
   "no": "Tidak",
   "settings_api_title": "Tetapan API & URL",
-  "settings_api_note": "Nota: Titik akhir lalai disediakan oleh Sekai Viewer. Menukar URL ini memerlukan memulakan semula aplikasi untuk berkesan sepenuhnya."
+  "settings_api_note": "Nota: Titik akhir lalai disediakan oleh Sekai Viewer. Menukar URL ini memerlukan memulakan semula aplikasi untuk berkesan sepenuhnya.",
+  "score_up_keep": "Skor Naik (Hingga GOOD atau lebih rendah)",
+  "sub_unit_score_up": "Peningkatan Skor Unit",
+  "score_up_character_rank": "Peningkatan Skor Pangkat Karakter",
+  "other_member_score_up_reference_rate": "Peningkatan Skor Ahli Lain",
+  "score_up_unit_count": "Peningkatan Skor Bilangan Unit"
 }

@@ -87,5 +87,10 @@
   "is_disassembled": "分解可能",
   "limit": "制限",
   "yes": "はい",
-  "no": "いいえ"
+  "no": "いいえ",
+  "score_up_keep": "スコアアップ (GOODまで維持)",
+  "sub_unit_score_up": "ユニットスコアブースト",
+  "score_up_character_rank": "キャラクターランクスコアブースト",
+  "other_member_score_up_reference_rate": "他メンバースコアブースト",
+  "score_up_unit_count": "ユニット数スコアブースト"
 }

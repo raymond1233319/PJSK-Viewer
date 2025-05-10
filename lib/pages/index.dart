@@ -216,6 +216,45 @@ class FilterOptions {
                 .translated,
         'value': 'life_recovery',
       },
+      {
+        'display':
+            localizations
+                .translate('filter', 'skill', innerKey: 'perfect_score_up')
+                .translated,
+        'value': 'perfect_score_up',
+      },
+      {
+        'display':
+            localizations
+                .translate('filter', 'skill', innerKey: 'life_score_up')
+                .translated,
+        'value': 'life_score_up',
+      },
+      {
+        'display':
+            appLocalizations.translate('score_up_keep'),
+        'value': 'score_up_keep',
+      },
+      {
+        'display':
+            appLocalizations.translate('sub_unit_score_up'),
+        'value': 'sub_unit_score_up',
+      },
+      {
+        'display':
+            appLocalizations.translate('score_up_character_rank'),
+        'value': 'score_up_character_rank',
+      },
+      {
+        'display':
+            appLocalizations.translate('other_member_score_up_reference_rate'),
+        'value': 'other_member_score_up_reference_rate',
+      },
+      {
+        'display':
+            appLocalizations.translate('score_up_unit_count'),
+        'value': 'score_up_unit_count',
+      },
     ];
   }
 }
