@@ -8,6 +8,7 @@ import 'package:pjsk_viewer/pages/music_detail.dart';
 import 'package:pjsk_viewer/utils/database/music_database.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
 import 'package:pjsk_viewer/utils/globals.dart';
+
 class MusicIndexPage extends StatefulWidget {
   const MusicIndexPage({super.key});
 
@@ -26,6 +27,8 @@ class _MusicIndexPageState extends State<MusicIndexPage> {
   List<Map<String, String>> _lyricistOptions = [];
   List<Map<String, String>> _composerOptions = [];
   List<Map<String, String>> _arrangerOptions = [];
+
+  final FocusNode _searchFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -114,7 +117,23 @@ class _MusicIndexPageState extends State<MusicIndexPage> {
     final title =
         musicData['title'] as String? ??
         AppLocalizations.of(context).translate('unknown_music');
-    final subTitleText = '';
+
+    // Build subtitle with composer, lyricist, arranger
+    final List<String> creditParts = [];
+    if (musicData['composer'] != null &&
+        musicData['composer'].toString().isNotEmpty) {
+      creditParts.add(musicData['composer'].toString());
+    }
+    if (musicData['lyricist'] != null &&
+        musicData['lyricist'].toString().isNotEmpty) {
+      creditParts.add(musicData['lyricist'].toString());
+    }
+    if (musicData['arranger'] != null &&
+        musicData['arranger'].toString().isNotEmpty) {
+      creditParts.add(musicData['arranger'].toString());
+    }
+
+    final String subTitle = creditParts.toSet().join(' / ');
     final assetbundleName = musicData['assetbundleName'] as String? ?? '';
     final logoUrl =
         assetbundleName.isNotEmpty
@@ -135,8 +154,10 @@ class _MusicIndexPageState extends State<MusicIndexPage> {
       id: musicId,
       top: top,
       title: title,
+      subtitle: subTitle,
       pageBuilder: (id) => MusicDetailPage(musicId: id),
       aspectRatio: 4 / 3,
+      searchFocusNode: _searchFocusNode,
     );
   }
 
@@ -257,6 +278,7 @@ class _MusicIndexPageState extends State<MusicIndexPage> {
           pageSize: 10,
           scrollController: _scrollController,
           itemBuilder: _buildMusicItem,
+          searchFocusNode: _searchFocusNode,
         );
   }
 

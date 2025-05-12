@@ -25,6 +25,8 @@ class _EventPageState extends State<EventPage> {
   // filter option
   final ScrollController _scrollController = ScrollController();
 
+  final _searchFocusNode = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -144,6 +146,7 @@ class _EventPageState extends State<EventPage> {
       title: originalName,
       subtitle: subTitleText,
       pageBuilder: (id) => EventDetailPage(eventId: id),
+      searchFocusNode: _searchFocusNode,
     );
   }
 
@@ -215,6 +218,8 @@ class _EventPageState extends State<EventPage> {
 
           // build each row
           itemBuilder: (context, event) => buildEventItem(context, event),
+
+          searchFocusNode: _searchFocusNode,
         );
   }
 }

@@ -26,7 +26,7 @@ class FetchedData {
 Future<Map<String, String>> buildFetchUrls() async {
   // This function builds the URLs for fetching data
   final baseUrl = AppGlobals.databaseUrl;
-  
+
   return {
     'cards': "$baseUrl/cards.json",
     'gachas': "$baseUrl/gachas.json",
@@ -55,11 +55,13 @@ Future<Map<String, String>> buildFetchUrls() async {
     'resourceBoxes': "$baseUrl/resourceBoxes.json",
     'mySekaiMaterials': "${AppGlobals.jpDatabaseUrl}/mysekaiMaterials.json",
     'mySekaiFixtures': "${AppGlobals.jpDatabaseUrl}/mysekaiFixtures.json",
-    'mysekaiFixtureMainGenres': "${AppGlobals.jpDatabaseUrl}/mysekaiFixtureMainGenres.json",
+    'mysekaiFixtureMainGenres':
+        "${AppGlobals.jpDatabaseUrl}/mysekaiFixtureMainGenres.json",
     'mysekaiBlueprints': "${AppGlobals.jpDatabaseUrl}/mysekaiBlueprints.json",
     'mysekaiBlueprintMysekaiMaterialCosts':
         "${AppGlobals.jpDatabaseUrl}/mysekaiBlueprintMysekaiMaterialCosts.json",
-    'mysekaiFixtureSubGenres': "${AppGlobals.jpDatabaseUrl}/mysekaiFixtureSubGenres.json",
+    'mysekaiFixtureSubGenres':
+        "${AppGlobals.jpDatabaseUrl}/mysekaiFixtureSubGenres.json",
     'mysekaiFixtureTags': "${AppGlobals.jpDatabaseUrl}/mysekaiFixtureTags.json",
     'mysekaiGameCharacterUnitGroups':
         "${AppGlobals.jpDatabaseUrl}/mysekaiGameCharacterUnitGroups.json",
@@ -67,7 +69,11 @@ Future<Map<String, String>> buildFetchUrls() async {
         "${AppGlobals.jpDatabaseUrl}/mysekaiCharacterTalkConditions.json",
     'mysekaiCharacterTalkConditionGroups':
         "${AppGlobals.jpDatabaseUrl}/mysekaiCharacterTalkConditionGroups.json",
-    'mysekaiCharacterTalks': "${AppGlobals.jpDatabaseUrl}/mysekaiCharacterTalks.json",
+    'mysekaiCharacterTalks':
+        "${AppGlobals.jpDatabaseUrl}/mysekaiCharacterTalks.json",
+    'musicOriginals': "$baseUrl/musicOriginals.json",
+    'eventMusics': "$baseUrl/eventMusics.json",
+    'musicAssetVariants': "$baseUrl/musicAssetVariants.json",
   };
 }
 
@@ -149,6 +155,9 @@ Future<void> databaseInitialization(void Function(String) onProgress) async {
       'mysekaiFixtureMainGenres',
       'mysekaiFixtureSubGenres',
       'mysekaiFixtureTags',
+      'musicOriginals',
+      'eventMusics',
+      'musicAssetVariants'
     ],
   );
 

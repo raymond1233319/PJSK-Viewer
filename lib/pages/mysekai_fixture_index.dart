@@ -23,6 +23,7 @@ class _MySekaiIndexPageState extends State<MySekaiIndexPage> {
   List<Map<String, dynamic>>? _tags;
 
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _searchFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -89,6 +90,7 @@ class _MySekaiIndexPageState extends State<MySekaiIndexPage> {
       title: localizedName,
       subtitle: subTitleText ?? '',
       pageBuilder: (id) => MysekaiFixtureDetailPage(fixtureId: id),
+      searchFocusNode: _searchFocusNode,
     );
   }
 
@@ -287,6 +289,7 @@ class _MySekaiIndexPageState extends State<MySekaiIndexPage> {
           scrollController: _scrollController,
           itemBuilder: _buildFixtureItem,
           itemsPerRow: 2,
+          searchFocusNode: _searchFocusNode,
         );
   }
 

@@ -3,7 +3,8 @@ import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:pjsk_viewer/i18n/app_localizations.dart';
 import 'package:pjsk_viewer/pages/event_tracker.dart';
-import 'package:pjsk_viewer/utils/audio_service.dart';
+import 'package:pjsk_viewer/pages/music_detail.dart';
+import 'package:pjsk_viewer/utils/audio_player.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
 import 'package:pjsk_viewer/utils/database/event_database.dart';
 import 'package:pjsk_viewer/utils/database/my_sekai_database.dart';
@@ -26,12 +27,12 @@ class EventDetailPage extends StatefulWidget {
 class _EventDetailPageState extends State<EventDetailPage> {
   bool _isLoading = true;
   Map<String, dynamic>? _eventData;
-  final AudioService _audioService = AudioService();
   final ValueNotifier<bool> _showTimePointsNotifier = ValueNotifier(false);
   List<Map<String, dynamic>> _worldBlooms = [];
   List<Map<String, dynamic>> _eventExchangeResourceBoxDetails = [];
   Map<int, String> _eventItemAssetMap = {};
   List<Map<String, dynamic>> _mySekaiMaterials = [];
+  List<dynamic> _eventMusics = [];
 
   // --- Helper to format Duration ---
   String _formatDurationFull(Duration d, ContentLocalizations localizations) {
@@ -60,14 +61,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
   @override
   void initState() {
     super.initState();
-
     _fetchEventDetails();
   }
 
   @override
   void dispose() {
     super.dispose();
-    _audioService.dispose();
   }
 
   Future<void> _fetchEventDetails() async {
@@ -82,11 +81,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
       if (results != null) {
         final eventData = Map<String, dynamic>.from(results);
-        // Construct and check audio URL after fetching data
-        final assetbundleName = eventData['assetbundleName'];
-        final audioUrl =
-            "${AppGlobals.assetUrl}/event/$assetbundleName/bgm/${assetbundleName}_top.mp3";
-        _audioService.loadAudio(audioUrl);
 
         if (eventData['eventType'] == 'cheerful_carnival') {
           final pref = await SharedPreferences.getInstance();
@@ -133,6 +127,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
         _eventItemAssetMap = await EventDatabase.getEventItemAssetbundleMap();
         _mySekaiMaterials = await MySekaiDatabase.getAllMaterials();
+        final prefs = await SharedPreferences.getInstance();
+        _eventMusics = json.decode(prefs.getString('eventMusics') ?? '[]');
         setState(() {
           _eventData = eventData;
           _isLoading = false;
@@ -142,7 +138,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           _isLoading = false;
         });
       }
-    } catch (e) {
+    } catch (_) {
       setState(() {
         _isLoading = false;
       });
@@ -287,6 +283,18 @@ class _EventDetailPageState extends State<EventDetailPage> {
       _eventData?['eventExchangeSummaries'] ?? '{}',
     );
 
+    // get the music
+    final int? musicId =
+        _eventMusics.firstWhere(
+          (e) => e['eventId'] == widget.eventId,
+          orElse: () => null,
+        )?['musicId'];
+    developer.log(musicId.toString());
+
+    // Construct and check audio URL after fetching data
+    final audioUrl =
+        "${AppGlobals.assetUrl}/event/$assetbundleName/bgm/${assetbundleName}_top.mp3";
+
     final now = DateTime.now().millisecondsSinceEpoch;
     final startTime = _eventData?['startAt'] ?? 0;
     return Scaffold(
@@ -296,58 +304,43 @@ class _EventDetailPageState extends State<EventDetailPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Image Section
-            MultiImageSelector(
-              options: [
-                MultiImageOption(
-                  label: appLocalizations.translate('logo'),
-                  imageUrl: logoUrl,
+            DetailBuilder.buildCard(
+              children: [
+                MultiImageSelector(
+                  options: [
+                    MultiImageOption(
+                      label: appLocalizations.translate('logo'),
+                      imageUrl: logoUrl,
+                    ),
+                    if (bannerUrl != null)
+                      MultiImageOption(
+                        label: appLocalizations.translate('banner'),
+                        imageUrl: bannerUrl,
+                      ),
+                    if (backgroundUrl != null)
+                      MultiImageOption(
+                        label:
+                            localizations
+                                .translate('event', "tab", innerKey: "title[1]")
+                                .translated ??
+                            'background',
+                        imageUrl: backgroundUrl,
+                      ),
+                    if (characterUrl != null)
+                      MultiImageOption(
+                        label:
+                            localizations
+                                .translate('event', "tab", innerKey: "title[2]")
+                                .translated ??
+                            'Character',
+                        imageUrl: characterUrl,
+                      ),
+                  ],
                 ),
-                if (bannerUrl != null)
-                  MultiImageOption(
-                    label: appLocalizations.translate('banner'),
-                    imageUrl: bannerUrl,
-                  ),
-                if (backgroundUrl != null)
-                  MultiImageOption(
-                    label:
-                        localizations
-                            .translate('event', "tab", innerKey: "title[1]")
-                            .translated ??
-                        'background',
-                    imageUrl: backgroundUrl,
-                  ),
-                if (characterUrl != null)
-                  MultiImageOption(
-                    label:
-                        localizations
-                            .translate('event', "tab", innerKey: "title[2]")
-                            .translated ??
-                        'Character',
-                    imageUrl: characterUrl,
-                  ),
+                // Audio Player Section
+                AudioPlayerFull(url: audioUrl, title: _eventData!['name'], artUrl: logoUrl,),
               ],
             ),
-            // Audio Player Section
-            AudioPlayerFull(audioService: _audioService),
-
-            // Story Outline
-            if (eventStoryOutline.isNotEmpty)
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 12.0),
-                padding: const EdgeInsets.all(12.0),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.cyan, width: 1.5),
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                child: Text(
-                  eventStoryOutline,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(fontSize: 16),
-                  textAlign: TextAlign.left,
-                ),
-              ),
 
             // Details Section
             Card(
@@ -360,6 +353,23 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
+                    // Story Outline
+                    if (eventStoryOutline.isNotEmpty)
+                      Container(
+                        margin: const EdgeInsets.symmetric(vertical: 12.0),
+                        padding: const EdgeInsets.all(12.0),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.cyan, width: 1.5),
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        child: Text(
+                          eventStoryOutline,
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.copyWith(fontSize: 16),
+                          textAlign: TextAlign.left,
+                        ),
+                      ),
                     // Remaining Time
                     _buildRemainingTimeRow(),
 
@@ -537,24 +547,24 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
                     // Jump to Event Tracker
                     if (now >= startTime)
-                      DetailBuilder.buildDetailRow(
+                      DetailBuilder.buildForwardNavigationButton(
+                        context,
                         localizations
                             .translate('common', 'eventTracker')
                             .translated,
-                        IconButton(
-                          icon: const Icon(Icons.arrow_forward),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (_) => EventTrackerPage(
-                                      eventId: widget.eventId,
-                                    ),
-                              ),
-                            );
-                          },
-                        ),
+                        widget.eventId,
+                        (_) => EventTrackerPage(eventId: widget.eventId),
+                      ),
+
+                    //music
+                    if (musicId != null)
+                      DetailBuilder.buildForwardNavigationButton(
+                        context,
+                        localizations
+                            .translate('event', 'newlyWrittenSong')
+                            .translated,
+                        musicId,
+                        (_) => MusicDetailPage(musicId: musicId),
                       ),
 
                     //Gachas

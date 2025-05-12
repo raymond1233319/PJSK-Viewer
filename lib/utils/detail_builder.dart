@@ -7,8 +7,10 @@ import 'package:intl/intl.dart';
 import 'package:pjsk_viewer/i18n/app_localizations.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
 import 'package:pjsk_viewer/pages/card_detail.dart';
+import 'package:pjsk_viewer/pages/event_detail.dart';
+import 'package:pjsk_viewer/pages/event_tracker.dart';
 import 'package:pjsk_viewer/pages/gacha_detail.dart';
-import 'package:pjsk_viewer/utils/audio_service.dart';
+import 'package:pjsk_viewer/utils/audio_player.dart';
 import 'package:pjsk_viewer/utils/helper.dart';
 import 'package:pjsk_viewer/utils/globals.dart';
 
@@ -342,63 +344,56 @@ class DetailBuilder {
   static Widget buildGachaPhase(LocalizedText value, String audioUrl) {
     final audioService = AudioService();
     // Note: Context is obtained within the FutureBuilder below
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: FutureBuilder<void>(
-          future: audioService.loadAudio(audioUrl),
-          builder: (context, snapshot) {
-            final localizations = AppLocalizations.of(
-              context,
-            ); // Get localizations from context
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                GestureDetector(
-                  onTap: () async {
-                    await Clipboard.setData(ClipboardData(text: value.combined));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          localizations.translate('copied_to_clipboard'),
-                        ),
-                      ),
-                    );
-                  },
-                  child: Center(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          value.japanese,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        if (value.japanese != value.translated)
-                          Text(
-                            value.translated,
-                            style: TextStyle(color: Colors.grey[600]),
-                            textAlign: TextAlign.center,
-                          ),
-                      ],
+    return FutureBuilder<void>(
+      future: audioService.loadAudio(audioUrl),
+      builder: (context, snapshot) {
+        final localizations = AppLocalizations.of(
+          context,
+        ); // Get localizations from context
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GestureDetector(
+              onTap: () async {
+                await Clipboard.setData(ClipboardData(text: value.combined));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      localizations.translate('copied_to_clipboard'),
                     ),
                   ),
+                );
+              },
+              child: Center(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      value.japanese,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    if (value.japanese != value.translated)
+                      Text(
+                        value.translated,
+                        style: TextStyle(color: Colors.grey[600]),
+                        textAlign: TextAlign.center,
+                      ),
+                  ],
                 ),
-                if (snapshot.connectionState == ConnectionState.done &&
-                    audioService.audioExists) ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [SimpleAudioPlayer(audioService: audioService)],
-                  ),
-                ],
-              ],
-            );
-          },
-        ),
-      ),
+              ),
+            ),
+            if (snapshot.connectionState == ConnectionState.done &&
+                audioService.audioExists) ...[
+              const SizedBox(height: 8),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [SimpleAudioPlayer(audioService: audioService)],
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 
@@ -1364,6 +1359,117 @@ class DetailBuilder {
               ),
             ),
           ),
+    );
+  }
+
+  static Widget buildEventThumbnail(context, eventId, assetBundleName) {
+    final localizations = ContentLocalizations.of(context);
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => EventDetailPage(eventId: eventId)),
+        );
+      },
+      child: DetailBuilder.buildDetailRowWithImageUrl(
+        localizations?.translate('common', 'event').translated ?? 'Event',
+        '${AppGlobals.assetUrl}/event/$assetBundleName/logo/logo.webp',
+        "",
+      ),
+    );
+  }
+
+  static Widget buildForwardNavigationButton(
+    BuildContext context,
+    String label,
+    int id,
+    Widget Function(int id) pageBuilder,
+  ) {
+    return DetailBuilder.buildDetailRow(
+      label,
+      IconButton(
+        icon: const Icon(Icons.arrow_forward),
+        onPressed: () {
+          navigateToDetailPage<int>(
+            context: context,
+            id: id,
+            pageBuilder: pageBuilder,
+          );
+        },
+      ),
+    );
+  }
+
+  static Widget buildCard({
+    required List<Widget> children,
+    String? title,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(8.0),
+    EdgeInsetsGeometry margin = const EdgeInsets.symmetric(vertical: 8.0),
+    double elevation = 1.0,
+    double borderRadius = 10.0,
+  }) {
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(borderRadius),
+      ),
+      margin: margin,
+      elevation: elevation,
+      child: Padding(
+        padding: padding,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (title != null) ...[
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+
+  static Widget buildSectionTitle(
+    BuildContext context,
+    String section,
+    String key,
+  ) {
+    final localizations = ContentLocalizations.of(context);
+    final String title =
+        localizations?.translate(section, key).translated ?? key;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Text(
+            title,
+            style: Theme.of(context).textTheme.titleLarge,
+            textAlign: TextAlign.center,
+          ),
+        ),
+        // Center the underline element horizontally
+        Center(
+          child: Container(
+            height: 3.0,
+            width: 100.0,
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor,
+              borderRadius: BorderRadius.circular(1.5),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 }

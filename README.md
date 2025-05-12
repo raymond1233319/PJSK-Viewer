@@ -10,7 +10,7 @@ This application does not own the materials displayed. All credits go to its rig
 
 ## Features
 
-*   **Information:** View information about cards, event, gachas and music.
+*   **Information:** View information about cards, event, gachas, music and mysekai.
 *   **Event Tracker:** Tools to monitor event progress or rankings.
 *   **Localization:** Supports multiple languages.
 *   **Offline Access:** Caches game data locally for faster access and offline viewing.
@@ -26,14 +26,11 @@ This application does not own the materials displayed. All credits go to its rig
 ## 🐛 Known Issues
 
 *   Incorrect gacha rate for bloom festival.
-*   IOS: Download not functioning.
+*   IOS: Download may not function.
 *   See the [open issues](https://github.com/raymond1233319/PJSKviewer/issues) for a full list of known issues.
 
 ## 🗺️ Roadmap
 
-*   [ ] Other server region support.
-*   [ ] Music meta data.
-*   [ ] Background music player.
 *   [ ] Sticker
 *   [ ] Story reader
 

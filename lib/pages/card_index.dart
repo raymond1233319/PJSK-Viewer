@@ -31,6 +31,8 @@ class _CardIndexPageState extends State<CardIndexPage> {
   // filter option
   final ScrollController _scrollController = ScrollController();
 
+  final _searchFocusNode = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -252,6 +254,7 @@ class _CardIndexPageState extends State<CardIndexPage> {
                 cardId: id,
                 showTrainedImage: jumpToTrainedImage,
               ),
+          searchFocusNode: _searchFocusNode,
         );
       },
     );
@@ -374,6 +377,8 @@ class _CardIndexPageState extends State<CardIndexPage> {
               ?.translate('card', "tab", innerKey: "title[2]")
               .translated ??
           'After training image',
+
+      searchFocusNode: _searchFocusNode,
     );
   }
 }

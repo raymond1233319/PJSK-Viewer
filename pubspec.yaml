@@ -51,6 +51,10 @@ dependencies:
   url_launcher: ^6.3.1
   share_plus: ^11.0.0
   package_info_plus: ^8.3.0
+  video_player: ^2.9.5
+  xml: ^6.5.0
+  audio_service: ^0.18.18
+  just_audio_background: ^0.0.1-beta.16
 
 dev_dependencies:
   flutter_test:
@@ -92,6 +96,7 @@ flutter:
     - assets/common/logo_mini/
     - assets/frame/
     - lib/utils/database/
+    - assets/music/
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

@@ -244,7 +244,7 @@ class MusicDatabase {
     Map<String, dynamic> vocal,
     List<String> outsideCharacterNames,
   ) {
-    final localizations = ContentLocalizations.of(context)!;
+    final localizations = AppGlobals.i18n;
     final chars =
         (vocal['characters'] as List<dynamic>).map((c) {
           final type = c['characterType'] as String;

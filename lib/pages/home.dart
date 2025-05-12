@@ -9,6 +9,7 @@ import 'package:pjsk_viewer/pages/about.dart';
 import 'package:pjsk_viewer/pages/card_index.dart';
 import 'package:pjsk_viewer/pages/event_tracker.dart';
 import 'package:pjsk_viewer/pages/music_index.dart';
+import 'package:pjsk_viewer/pages/music_suffle.dart';
 import 'package:pjsk_viewer/pages/mysekai_fixture_index.dart';
 import 'package:pjsk_viewer/pages/setting.dart';
 import 'package:pjsk_viewer/utils/database/database.dart';
@@ -142,6 +143,12 @@ class HomePage extends StatelessWidget {
                           Icons.info_outline,
                           'about',
                           const AboutPage(),
+                        ),
+                        _buildMenuItem(
+                          context,
+                          Icons.shuffle,
+                          'Music Suffle (developing)',
+                          const MusicShufflePage(),
                         ),
                       ],
                     );

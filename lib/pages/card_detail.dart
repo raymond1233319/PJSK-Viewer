@@ -9,7 +9,7 @@ import 'package:pjsk_viewer/utils/globals.dart';
 import 'package:pjsk_viewer/utils/helper.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
 import 'package:pjsk_viewer/utils/image_selector.dart';
-import 'package:pjsk_viewer/utils/audio_service.dart';
+import 'package:pjsk_viewer/utils/audio_player.dart';
 import 'dart:async';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -143,7 +143,6 @@ class _CardDetailPageState extends State<CardDetailPage> {
       displayCardName = replaceMainText(displayCardName!, _cardData!['prefix']);
       gachaPhrase = replaceMainText(gachaPhrase, _cardData!['gachaPhrase']);
     }
-    
 
     // Determine image URLs
     final String assetbundleName = _cardData!['assetbundleName'];
@@ -188,40 +187,55 @@ class _CardDetailPageState extends State<CardDetailPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Image Selector
-            Column(
+            DetailBuilder.buildCard(
               children: [
-                MultiImageSelector(
-                  options: [
-                    if (_cardData!['initialSpecialTrainingStatus'] != 'done')
-                      MultiImageOption(
-                        label:
-                            localizations
-                                ?.translate('card', "tab", innerKey: "title[0]")
-                                .translated ??
-                            'Normal image',
-                        imageUrl: normalUrl,
-                      ),
-                    if (_cardData!['specialTrainingCosts'] != '[]' ||
-                        _cardData!['initialSpecialTrainingStatus'] == 'done')
-                      MultiImageOption(
-                        label:
-                            localizations
-                                ?.translate('card', "tab", innerKey: "title[2]")
-                                .translated ??
-                            'After training image',
-                        imageUrl: trainedUrl,
-                      ),
+                Column(
+                  children: [
+                    MultiImageSelector(
+                      options: [
+                        if (_cardData!['initialSpecialTrainingStatus'] !=
+                            'done')
+                          MultiImageOption(
+                            label:
+                                localizations
+                                    ?.translate(
+                                      'card',
+                                      "tab",
+                                      innerKey: "title[0]",
+                                    )
+                                    .translated ??
+                                'Normal image',
+                            imageUrl: normalUrl,
+                          ),
+                        if (_cardData!['specialTrainingCosts'] != '[]' ||
+                            _cardData!['initialSpecialTrainingStatus'] ==
+                                'done')
+                          MultiImageOption(
+                            label:
+                                localizations
+                                    ?.translate(
+                                      'card',
+                                      "tab",
+                                      innerKey: "title[2]",
+                                    )
+                                    .translated ??
+                                'After training image',
+                            imageUrl: trainedUrl,
+                          ),
+                      ],
+                      startPosition: widget.showTrainedImage ? 1 : 0,
+                    ),
                   ],
-                  startPosition: widget.showTrainedImage ? 1 : 0,
                 ),
+
+                //Gacha Phrase
+                if (gachaPhrase.japanese.isNotEmpty &&
+                    gachaPhrase.japanese != '-')
+                  DetailBuilder.buildGachaPhase(gachaPhrase, _audioUrl ?? ''),
               ],
             ),
 
-            //Gacha Phrase
-            if (gachaPhrase.japanese.isNotEmpty && gachaPhrase.japanese != '-')
-              DetailBuilder.buildGachaPhase(gachaPhrase, _audioUrl ?? ''),
-
+            // Image Selector
             Card(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -290,26 +304,10 @@ class _CardDetailPageState extends State<CardDetailPage> {
 
                     // Event
                     if (_cardData!['event'] != null)
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (_) => EventDetailPage(
-                                    eventId: _cardData!['eventId'] as int,
-                                  ),
-                            ),
-                          );
-                        },
-                        child: DetailBuilder.buildDetailRowWithImageUrl(
-                          localizations
-                                  ?.translate('common', 'event')
-                                  .translated ??
-                              'Event',
-                          '${AppGlobals.assetUrl}/event/${_cardData!['event']['assetbundleName']}/logo/logo.webp',
-                          _cardData!['event']['name'],
-                        ),
+                      DetailBuilder.buildEventThumbnail(
+                        context,
+                        _cardData!['eventId'],
+                        _cardData!['event']['assetbundleName'],
                       ),
 
                     // Release Date

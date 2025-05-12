@@ -9,6 +9,9 @@ import 'package:pjsk_viewer/utils/database/database.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pjsk_viewer/utils/globals.dart';
+import 'package:audio_service/audio_service.dart';
+import 'package:just_audio_background/just_audio_background.dart';
+import 'package:pjsk_viewer/utils/audio_handler.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +42,7 @@ class _AppInitializerState extends State<AppInitializer> {
     await databaseInitialization((msg) {
       setState(() => _logs.add(msg));
     });
+    await setBackgroundMusic();
   }
 
   Future<void> _setLocale() async {
@@ -100,6 +104,18 @@ class _AppInitializerState extends State<AppInitializer> {
     developer.log(
       'AppGlobals: ${AppGlobals.databaseUrl}, ${AppGlobals.assetUrl}, ${AppGlobals.localizationUrl}, ${AppGlobals.apiUrl}, ${AppGlobals.region}',
       name: 'AppGlobals',
+    );
+  }
+
+  Future<void> setBackgroundMusic() async {
+    AppGlobals.audioHandler = await AudioService.init(
+      builder: () => PJSKAudioHandler(),
+      config: const AudioServiceConfig(
+        androidNotificationChannelId: 'com.pjskviewer.channel.audio',
+        // androidShowNotificationBadge: true, // Optional
+        // androidStopForegroundOnPause: true, // Optional
+        // notificationColor: Colors.blue, // Optional: requires android.R.color.blue
+      ),
     );
   }
 

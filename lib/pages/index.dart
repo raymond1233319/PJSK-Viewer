@@ -231,28 +231,25 @@ class FilterOptions {
         'value': 'life_score_up',
       },
       {
-        'display':
-            appLocalizations.translate('score_up_keep'),
+        'display': appLocalizations.translate('score_up_keep'),
         'value': 'score_up_keep',
       },
       {
-        'display':
-            appLocalizations.translate('sub_unit_score_up'),
+        'display': appLocalizations.translate('sub_unit_score_up'),
         'value': 'sub_unit_score_up',
       },
       {
-        'display':
-            appLocalizations.translate('score_up_character_rank'),
+        'display': appLocalizations.translate('score_up_character_rank'),
         'value': 'score_up_character_rank',
       },
       {
-        'display':
-            appLocalizations.translate('other_member_score_up_reference_rate'),
+        'display': appLocalizations.translate(
+          'other_member_score_up_reference_rate',
+        ),
         'value': 'other_member_score_up_reference_rate',
       },
       {
-        'display':
-            appLocalizations.translate('score_up_unit_count'),
+        'display': appLocalizations.translate('score_up_unit_count'),
         'value': 'score_up_unit_count',
       },
     ];
@@ -498,6 +495,7 @@ class IndexPage<T> extends StatefulWidget {
 
   final List<Widget>? appBarActions;
   final String? appBarSwitchText;
+  final FocusNode searchFocusNode;
 
   const IndexPage({
     super.key,
@@ -512,6 +510,7 @@ class IndexPage<T> extends StatefulWidget {
     this.appBarActions,
     this.appBarSwitchText,
     this.itemsPerRow = 1,
+    required this.searchFocusNode,
   });
 
   @override
@@ -521,6 +520,7 @@ class IndexPage<T> extends StatefulWidget {
 class _IndexPageState<T> extends State<IndexPage<T>> {
   late LazyLoadUtility<T> _lazyLoad;
   String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -632,10 +632,13 @@ class _IndexPageState<T> extends State<IndexPage<T>> {
                         if (widget.showSearch) ...[
                           Expanded(
                             child: TextField(
+                              controller: _searchController,
+                              focusNode: widget.searchFocusNode,
                               onChanged: (q) {
                                 _searchQuery = q;
                                 applyFilters();
                               },
+                              textInputAction: TextInputAction.search,
                               decoration: InputDecoration(
                                 hintText:
                                     localizations
@@ -735,6 +738,7 @@ Widget buildIndexItem<T>({
   String subtitle = '',
   required Widget Function(T id) pageBuilder,
   double? aspectRatio,
+  required FocusNode searchFocusNode,
 }) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
@@ -744,12 +748,14 @@ Widget buildIndexItem<T>({
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           GestureDetector(
-            onTap:
-                () => navigateToDetailPage<T>(
-                  context: context,
-                  id: id,
-                  pageBuilder: pageBuilder,
-                ),
+            onTap: () {
+              searchFocusNode.unfocus();
+              navigateToDetailPage<T>(
+                context: context,
+                id: id,
+                pageBuilder: pageBuilder,
+              );
+            },
             child:
                 aspectRatio != null
                     ? AspectRatio(aspectRatio: aspectRatio, child: top)
@@ -759,12 +765,14 @@ Widget buildIndexItem<T>({
             title: Text(title, maxLines: 2, overflow: TextOverflow.ellipsis),
             subtitle: subtitle.isNotEmpty ? Text(subtitle) : null,
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap:
-                () => navigateToDetailPage<T>(
-                  context: context,
-                  id: id,
-                  pageBuilder: pageBuilder,
-                ),
+            onTap: () {
+              searchFocusNode.unfocus();
+              navigateToDetailPage<T>(
+                context: context,
+                id: id,
+                pageBuilder: pageBuilder,
+              );
+            },
           ),
         ],
       ),

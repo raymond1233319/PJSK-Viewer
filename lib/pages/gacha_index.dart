@@ -19,6 +19,7 @@ class _GachaIndexPageState extends State<GachaIndexPage> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _allGachas = [];
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _searchFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -97,6 +98,7 @@ class _GachaIndexPageState extends State<GachaIndexPage> {
       title: localizedName,
       subtitle: subTitleText,
       pageBuilder: (id) => GachaDetailPage(gachaId: id, showBanner: showBanner),
+      searchFocusNode: _searchFocusNode,
     );
   }
 
@@ -147,6 +149,7 @@ class _GachaIndexPageState extends State<GachaIndexPage> {
           pageSize: 10,
           scrollController: _scrollController,
           itemBuilder: _buildGachaItem,
+          searchFocusNode: _searchFocusNode,
         );
   }
 

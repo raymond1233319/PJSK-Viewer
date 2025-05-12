@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:pjsk_viewer/i18n/app_localizations.dart';
+import 'package:pjsk_viewer/utils/globals.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LocalizedText {
@@ -163,6 +165,11 @@ class ContentLocalizations {
         }
       }
     }
+    String jsonString;
+    jsonString = await rootBundle.loadString(
+      'assets/localization/$languageCode.json',
+    );
+    _stringMaps['app'] = _convertToStringMap(json.decode(jsonString));
 
     return true;
   }
@@ -311,6 +318,7 @@ class ContentLocalizationsDelegate
   Future<ContentLocalizations> load(Locale locale) async {
     ContentLocalizations localizations = ContentLocalizations(locale);
     await localizations.load();
+    AppGlobals.i18n = localizations;
     return localizations;
   }
 

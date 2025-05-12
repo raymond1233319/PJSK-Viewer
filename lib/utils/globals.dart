@@ -1,3 +1,6 @@
+import 'package:pjsk_viewer/i18n/localizations.dart';
+import 'package:pjsk_viewer/utils/audio_handler.dart';
+
 class AppGlobals {
   static String databaseUrl = 'https://sekai-world.github.io';
   static String assetUrl = 'https://storage.sekai.best';
@@ -8,6 +11,8 @@ class AppGlobals {
   static String jpDatabaseUrl =
       'https://sekai-world.github.io/sekai-master-db-diff';
   static String newsUrl = 'https://production-web.sekai.colorfulpalette.org/';
+  static late PJSKAudioHandler audioHandler;
+  static late ContentLocalizations i18n;
   static void reset() {
     databaseUrl = 'https://sekai-world.github.io';
     assetUrl = 'https://storage.sekai.best';

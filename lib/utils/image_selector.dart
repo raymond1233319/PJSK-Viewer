@@ -51,10 +51,7 @@ class _MultiImageSelectorState extends State<MultiImageSelector> {
   @override
   Widget build(BuildContext context) {
     final option = widget.options[_selectedIndex];
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Padding(
+    return Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
@@ -100,7 +97,6 @@ class _MultiImageSelectorState extends State<MultiImageSelector> {
             buildHeroImageViewer(context, option.imageUrl),
           ],
         ),
-      ),
-    );
+      );
   }
 }
