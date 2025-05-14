@@ -169,8 +169,12 @@ class ContentLocalizations {
     jsonString = await rootBundle.loadString(
       'assets/localization/$languageCode.json',
     );
-    _stringMaps['app'] = _convertToStringMap(json.decode(jsonString));
-
+    _stringMaps['app_$languageCode'] = _convertToStringMap(
+      json.decode(jsonString),
+    );
+    _stringMaps['app_ja'] = _convertToStringMap(
+      json.decode(await rootBundle.loadString('assets/localization/ja.json')),
+    );
     return true;
   }
 

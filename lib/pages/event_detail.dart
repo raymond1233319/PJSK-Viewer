@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:pjsk_viewer/i18n/app_localizations.dart';
 import 'package:pjsk_viewer/pages/event_tracker.dart';
@@ -338,7 +339,17 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   ],
                 ),
                 // Audio Player Section
-                AudioPlayerFull(url: audioUrl, title: _eventData!['name'], artUrl: logoUrl,),
+                AudioPlayerFull(
+                  mediaItem: MediaItem(
+                    id: audioUrl,
+                    title: _eventData!['name'],
+                    artUri: logoUrl != null ? Uri.parse(logoUrl) : null,
+                    extras: {
+                      'eventId': widget.eventId,
+                      'type': 'event',
+                    },
+                  ),
+                ),
               ],
             ),
 

@@ -11,6 +11,7 @@ import 'package:pjsk_viewer/pages/event_detail.dart';
 import 'package:pjsk_viewer/pages/event_tracker.dart';
 import 'package:pjsk_viewer/pages/gacha_detail.dart';
 import 'package:pjsk_viewer/utils/audio_player.dart';
+import 'package:pjsk_viewer/utils/cache_manager.dart';
 import 'package:pjsk_viewer/utils/helper.dart';
 import 'package:pjsk_viewer/utils/globals.dart';
 
@@ -183,6 +184,7 @@ class DetailBuilder {
     return buildDetailRow(
       label,
       CachedNetworkImage(
+        cacheManager: PJSKImageCacheManager.instance,
         imageUrl: imageUrl,
         height: height,
         fit: fit,
@@ -210,6 +212,7 @@ class DetailBuilder {
       label,
       imageUrls.map((url) {
         return CachedNetworkImage(
+          cacheManager: PJSKImageCacheManager.instance,
           imageUrl: url,
           height: height,
           fit: fit,
@@ -442,6 +445,7 @@ class DetailBuilder {
     final widget = Stack(
       children: [
         CachedNetworkImage(
+          cacheManager: PJSKImageCacheManager.instance,
           imageUrl: url,
           height: size,
           width: size,
@@ -1262,6 +1266,7 @@ class DetailBuilder {
     return Stack(
       children: [
         CachedNetworkImage(
+          cacheManager: PJSKImageCacheManager.instance,
           imageUrl: url,
           width: size,
           height: size,

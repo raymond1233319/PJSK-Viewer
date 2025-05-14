@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:pjsk_viewer/i18n/app_localizations.dart';
 import 'package:pjsk_viewer/pages/index.dart';
 import 'package:pjsk_viewer/pages/music_detail.dart';
+import 'package:pjsk_viewer/utils/cache_manager.dart';
 import 'package:pjsk_viewer/utils/database/music_database.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
 import 'package:pjsk_viewer/utils/globals.dart';
@@ -140,6 +141,7 @@ class _MusicIndexPageState extends State<MusicIndexPage> {
             ? '${AppGlobals.assetUrl}/music/jacket/$assetbundleName/$assetbundleName.webp'
             : '';
     final top = CachedNetworkImage(
+      cacheManager: PJSKImageCacheManager.instance,
       imageUrl: logoUrl,
       fit: BoxFit.cover,
       placeholder:

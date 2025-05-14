@@ -12,6 +12,7 @@ import 'package:pjsk_viewer/pages/music_index.dart';
 import 'package:pjsk_viewer/pages/music_suffle.dart';
 import 'package:pjsk_viewer/pages/mysekai_fixture_index.dart';
 import 'package:pjsk_viewer/pages/setting.dart';
+import 'package:pjsk_viewer/utils/cache_manager.dart';
 import 'package:pjsk_viewer/utils/database/database.dart';
 import 'package:pjsk_viewer/utils/database/event_database.dart';
 import 'package:pjsk_viewer/utils/detail_builder.dart';
@@ -30,27 +31,16 @@ int? currentEventId;
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
+  static final Widget musicShufflePage = MusicShufflePage();
 
   Widget _buildMenuItem(
     BuildContext context,
     IconData icon,
-    String key,
+    String title,
     Widget page, {
     String? innerKey,
   }) {
     final halfWidth = MediaQuery.of(context).size.width / 2;
-    final localizations = ContentLocalizations.of(context);
-    final appLocalizations = AppLocalizations.of(context);
-    String title =
-        innerKey != null
-            ? localizations
-                    ?.translate('common', key, innerKey: innerKey)
-                    .translated ??
-                key
-            : localizations?.translate('common', key).translated ?? key;
-    if (title == '') {
-      title = appLocalizations.translate(key);
-    }
     return SizedBox(
       width: halfWidth,
       child: ListTile(
@@ -97,58 +87,80 @@ class HomePage extends StatelessWidget {
                         _buildMenuItem(
                           context,
                           Icons.event,
-                          'event',
+                          AppGlobals.i18n
+                              .translate('common', 'event')
+                              .translated,
                           const EventPage(),
                         ),
                         _buildMenuItem(
                           context,
                           Icons.rectangle_outlined,
-                          'card',
+                          AppGlobals.i18n
+                              .translate('common', 'card')
+                              .translated,
                           const CardIndexPage(),
                         ),
                         _buildMenuItem(
                           context,
                           Icons.casino_outlined,
-                          'gacha',
+                          AppGlobals.i18n
+                              .translate('common', 'gacha')
+                              .translated,
                           const GachaIndexPage(),
                         ),
                         _buildMenuItem(
                           context,
                           Icons.album,
-                          'music',
+                          AppGlobals.i18n
+                              .translate('common', 'music')
+                              .translated,
                           const MusicIndexPage(),
                         ),
                         _buildMenuItem(
                           context,
                           Icons.show_chart,
-                          'eventTracker',
+                          AppGlobals.i18n
+                              .translate('common', 'eventTracker')
+                              .translated,
                           const EventTrackerPage(),
                         ),
                         if (AppGlobals.region == 'jp')
                           _buildMenuItem(
                             context,
                             Icons.home,
-                            'my_sekai',
+                            AppGlobals.i18n
+                                .translate('app', 'my_sekai')
+                                .translated,
                             const MySekaiIndexPage(),
                           ),
                         _buildMenuItem(
                           context,
+                          Icons.music_note,
+                          AppGlobals.i18n
+                              .translate('app', 'music_player')
+                              .translated,
+                          musicShufflePage,
+                        ),
+                        _buildMenuItem(
+                          context,
                           Icons.settings,
-                          'settings',
+                          AppGlobals.i18n
+                              .translate(
+                                'common',
+                                'settings',
+                                innerKey: 'title',
+                              )
+                              .translated,
                           const SettingsPage(),
                           innerKey: 'title',
                         ),
                         _buildMenuItem(
                           context,
                           Icons.info_outline,
-                          'about',
+                          AppGlobals.i18n
+                              .translate('common', 'about')
+                              .translated,
                           const AboutPage(),
-                        ),
-                        _buildMenuItem(
-                          context,
-                          Icons.shuffle,
-                          'Music Suffle (developing)',
-                          const MusicShufflePage(),
                         ),
                       ],
                     );
@@ -289,6 +301,7 @@ class CurrentEvent extends StatelessWidget {
                             );
                           },
                           child: CachedNetworkImage(
+                            cacheManager: PJSKImageCacheManager.instance,
                             imageUrl: bannerUrl,
                             placeholder:
                                 (context, url) =>
@@ -421,7 +434,12 @@ class _LiveRankingSelectorState extends State<LiveRankingSelector> {
             : b;
       });
       _controller = TextEditingController(text: stored.toString());
-      setState(() => _matchedEntry = nearest);
+      if (mounted) {
+        setState(() {
+          _controller = _controller;
+          _matchedEntry = nearest;
+        });
+      }
     });
   }
 

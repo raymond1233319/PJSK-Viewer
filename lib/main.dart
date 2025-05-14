@@ -4,13 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
 import 'package:pjsk_viewer/i18n/app_localizations.dart';
+import 'package:pjsk_viewer/pages/event_detail.dart';
 import 'package:pjsk_viewer/pages/home.dart';
+import 'package:pjsk_viewer/pages/music_detail.dart';
 import 'package:pjsk_viewer/utils/database/database.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
+import 'package:pjsk_viewer/utils/helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pjsk_viewer/utils/globals.dart';
 import 'package:audio_service/audio_service.dart';
-import 'package:just_audio_background/just_audio_background.dart';
 import 'package:pjsk_viewer/utils/audio_handler.dart';
 
 Future<void> main() async {
@@ -43,6 +45,7 @@ class _AppInitializerState extends State<AppInitializer> {
       setState(() => _logs.add(msg));
     });
     await setBackgroundMusic();
+    _setupNotificationNavigation();
   }
 
   Future<void> _setLocale() async {
@@ -119,6 +122,37 @@ class _AppInitializerState extends State<AppInitializer> {
     );
   }
 
+  // Listen for notification clicks
+  void _setupNotificationNavigation() {
+    AudioService.notificationClicked.listen((mediaItemId) {
+      // Get the currently playing media item
+      final mediaItem = AppGlobals.audioHandler.currentMediaItem;
+      if (mediaItem == null) return;
+
+      // Check the media type and navigate accordingly
+      if (mediaItem.extras?['type'] == 'music') {
+        final trackId = mediaItem.extras?['trackId'] as int;
+        AppGlobals.navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (context) => MusicDetailPage(musicId: trackId),
+          ),
+        );
+      } else if (mediaItem.extras?['type'] == 'event') {
+        final eventId = mediaItem.extras?['eventId'] as int;
+        AppGlobals.navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (context) => EventDetailPage(eventId: eventId),
+          ),
+        );
+      } else {
+        // Navigate to home page
+        AppGlobals.navigatorKey.currentState?.push(
+          MaterialPageRoute(builder: (context) => HomePage()),
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<void>(
@@ -160,6 +194,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: "PJSK Viewer",
+      navigatorKey: AppGlobals.navigatorKey,
       localizationsDelegates: const [
         AppLocalizationsDelegate(),
         ContentLocalizationsDelegate(),

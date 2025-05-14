@@ -19,6 +19,11 @@ mixin PlayerController {
   void onPause();
   void onReplay();
   void onSeek(Duration position);
+  void onNext() {}
+  void onPrevious() {}
+  bool get supportsPlaylistControls => false;
+  bool get needVolumeControl => true;
+  bool get needDownloadButton => true;
 
   Stream<PositionData> getPositionDataStream() {
     return Stream.value(
@@ -30,28 +35,10 @@ mixin PlayerController {
     return Stream.value(PlayerState(false, ProcessingState.idle));
   }
 
-  Widget volumnStream() {
-    return StreamBuilder<double>(
-      stream: AppGlobals.audioHandler.volumeStream,
-      builder: (context, snapshot) {
-        return Slider(
-          divisions: 10,
-          min: 0.0,
-          max: 1.0,
-          value: snapshot.data ?? 1.0,
-          onChanged: (value) {
-            AppGlobals.audioHandler.setVolume(value);
-          },
-        );
-      },
-    );
-  }
-
   Widget? buildVideoWidget(BuildContext context) => null;
 
   Widget buildPlayerControls(BuildContext context) {
     {
-      final localizations = AppLocalizations.of(context);
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -59,117 +46,31 @@ mixin PlayerController {
           if (isVideo) buildVideoWidget(context) ?? const SizedBox.shrink(),
 
           // --- Progress Bar (Slider) ---
-          StreamBuilder<PositionData>(
-            stream: getPositionDataStream(),
-            builder: (context, snapshot) {
-              final positionData = snapshot.data;
-              final duration = positionData?.duration ?? Duration.zero;
-              final position = positionData?.position ?? Duration.zero;
-              final displayPosition =
-                  (position > duration) ? duration : position;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  children: [
-                    Text(
-                      formatDuration(displayPosition),
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    Expanded(
-                      child: Slider(
-                        min: 0.0,
-                        max: duration.inMilliseconds.toDouble() + 1.0,
-                        value: displayPosition.inMilliseconds.toDouble().clamp(
-                          0.0,
-                          duration.inMilliseconds.toDouble(),
-                        ),
-                        onChanged:
-                            (value) =>
-                                onSeek(Duration(milliseconds: value.round())),
-                      ),
-                    ),
-                    Text(
-                      formatDuration(duration),
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
+          progressBar(getPositionDataStream(), onSeek),
           const SizedBox(height: 8),
 
           // --- Control Buttons (Row) ---
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               // Download Button
-              Tooltip(
-                message: localizations.translate('tooltip_download_audio'),
-                child: IconButton(
-                  icon: const Icon(Icons.download),
-                  iconSize: 32.0,
-                  onPressed: () => onDownload(context),
-                ),
-              ),
-              const Spacer(),
+              if (needDownloadButton && !supportsPlaylistControls) downloadButton(context, onDownload),
+              if (needDownloadButton && !supportsPlaylistControls) const Spacer(),
+
+              // Add previous song button if supported
+              if (supportsPlaylistControls) previousButton(onPrevious),
 
               // Play/Pause/Replay Button
-              StreamBuilder<PlayerState>(
-                stream: getPlayerStateStream(),
-                builder: (context, snapshot) {
-                  final playerState = snapshot.data;
-                  final processingState = playerState?.processingState;
-                  final playing = playerState?.playing;
+              playButton(getPlayerStateStream(), onPlay, onPause, onReplay),
 
-                  if (processingState == ProcessingState.loading ||
-                      processingState == ProcessingState.buffering) {
-                    return Container(
-                      margin: const EdgeInsets.all(8.0),
-                      width: 48.0,
-                      height: 48.0,
-                      child: const CircularProgressIndicator(),
-                    );
-                  } else if (playing != true) {
-                    return Tooltip(
-                      message: localizations.translate('tooltip_play_audio'),
-                      child: IconButton(
-                        icon: const Icon(Icons.play_arrow),
-                        iconSize: 48.0,
-                        onPressed: () => onPlay(),
-                      ),
-                    );
-                  } else if (processingState != ProcessingState.completed) {
-                    return Tooltip(
-                      message: localizations.translate('tooltip_pause_audio'),
-                      child: IconButton(
-                        icon: const Icon(Icons.pause),
-                        iconSize: 48.0,
-                        onPressed: () => onPause(),
-                      ),
-                    );
-                  } else {
-                    return Tooltip(
-                      message: localizations.translate('tooltip_replay_audio'),
-                      child: IconButton(
-                        icon: const Icon(Icons.replay),
-                        iconSize: 48.0,
-                        onPressed: () => onReplay(),
-                      ),
-                    );
-                  }
-                },
-              ),
-
-              const Spacer(),
+              // Add next song button if supported
+              if (supportsPlaylistControls) nextButton(onNext),
 
               // Volume Control
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.volume_up, size: 24.0),
-                  SizedBox(width: 100, child: volumnStream()),
-                ],
-              ),
+              if (needVolumeControl && !supportsPlaylistControls)
+                const Spacer(),
+              if (needVolumeControl && !supportsPlaylistControls)
+                voulmnControl(globalVolumnStream),
             ],
           ),
         ],
@@ -178,69 +79,229 @@ mixin PlayerController {
   }
 }
 
-/// A full-featured audio player widget with a progress bar, play/pause,
-/// replay, download placeholder, and volume control.
-class AudioPlayerFull extends StatefulWidget {
-  final bool loadOnDemand;
-  final String url;
-  final String? title;
-  final String? artist;
-  final String? artUrl;
-  final double? skipSeconds;
-
-  const AudioPlayerFull({
-    super.key,
-    this.loadOnDemand = true,
-    required this.url,
-    this.title,
-    this.artist,
-    this.artUrl,
-    this.skipSeconds,
-  });
-
-  @override
-  State<AudioPlayerFull> createState() => _AudioPlayerFullState();
+Widget progressBar(Stream<PositionData> positionDataStream, onSeek) {
+  // --- Progress Bar (Slider) ---
+  return StreamBuilder<PositionData>(
+    stream: positionDataStream,
+    builder: (context, snapshot) {
+      final positionData = snapshot.data;
+      final duration = positionData?.duration ?? Duration.zero;
+      final position = positionData?.position ?? Duration.zero;
+      final displayPosition = (position > duration) ? duration : position;
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Row(
+          children: [
+            Text(
+              formatDuration(displayPosition),
+              style: const TextStyle(fontSize: 12),
+            ),
+            Expanded(
+              child: Slider(
+                min: 0.0,
+                max: duration.inMilliseconds.toDouble() + 1.0,
+                value: displayPosition.inMilliseconds.toDouble().clamp(
+                  0.0,
+                  duration.inMilliseconds.toDouble(),
+                ),
+                onChanged:
+                    (value) => onSeek(Duration(milliseconds: value.round())),
+              ),
+            ),
+            Text(
+              formatDuration(duration),
+              style: const TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
+      );
+    },
+  );
 }
 
-class _AudioPlayerFullState extends State<AudioPlayerFull>
-    with PlayerController {
-  bool _hasLoadedAudio = false;
+Widget playButton(
+  Stream<PlayerState> playerStateStream,
+  onPlay,
+  onPause,
+  onReplay, {
+  double size = 36,
+}) {
+  return StreamBuilder<PlayerState>(
+    stream: playerStateStream,
+    builder: (context, snapshot) {
+      final playerState = snapshot.data;
+      final processingState = playerState?.processingState;
+      final playing = playerState?.playing;
 
+      if (processingState == ProcessingState.loading ||
+          processingState == ProcessingState.buffering) {
+        return Container(
+          margin: const EdgeInsets.all(8.0),
+          width: size,
+          height: size,
+          child: const CircularProgressIndicator(),
+        );
+      } else if (playing != true) {
+        return Tooltip(
+          message:
+              AppGlobals.i18n.translate('app', 'tooltip_play_audio').translated,
+          child: IconButton(
+            icon: const Icon(Icons.play_arrow),
+            iconSize: size,
+            onPressed: () => onPlay(),
+          ),
+        );
+      } else if (processingState != ProcessingState.completed) {
+        return Tooltip(
+          message:
+              AppGlobals.i18n
+                  .translate('app', 'tooltip_pause_audio')
+                  .translated,
+          child: IconButton(
+            icon: const Icon(Icons.pause),
+            iconSize: size,
+            onPressed: () => onPause(),
+          ),
+        );
+      } else {
+        return Tooltip(
+          message:
+              AppGlobals.i18n
+                  .translate('app', 'tooltip_replay_audio')
+                  .translated,
+          child: IconButton(
+            icon: const Icon(Icons.replay),
+            iconSize: size,
+            onPressed: () => onReplay(),
+          ),
+        );
+      }
+    },
+  );
+}
+
+Widget globalVolumnStream() {
+  return StreamBuilder<double>(
+    stream: AppGlobals.audioHandler.volumeStream,
+    builder: (context, snapshot) {
+      return Slider(
+        divisions: 10,
+        min: 0.0,
+        max: 1.0,
+        value: snapshot.data ?? 1.0,
+        onChanged: (value) {
+          AppGlobals.audioHandler.setVolume(value);
+        },
+      );
+    },
+  );
+}
+
+Widget voulmnControl(volumnStream) {
+  return Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      const Icon(Icons.volume_up, size: 24.0),
+      SizedBox(width: 100, child: volumnStream()),
+    ],
+  );
+}
+
+Widget downloadButton(BuildContext context, onDownload) {
+  return Tooltip(
+    message:
+        AppGlobals.i18n.translate('app', 'tooltip_download_audio').translated,
+    child: IconButton(
+      icon: const Icon(Icons.download),
+      iconSize: 32.0,
+      onPressed: () => onDownload(context),
+    ),
+  );
+}
+
+/// Widget for the previous track button
+Widget previousButton(onPrevious) {
+  return Tooltip(
+    message:
+        AppGlobals.i18n.translate('app', 'tooltip_previous_track').translated,
+    child: IconButton(
+      icon: const Icon(Icons.skip_previous),
+      iconSize: 32.0,
+      onPressed: onPrevious,
+    ),
+  );
+}
+
+/// Widget for the next track button
+Widget nextButton(onNext) {
+  return Tooltip(
+    message: AppGlobals.i18n.translate('app', 'tooltip_next_track').translated,
+    child: IconButton(
+      icon: const Icon(Icons.skip_next),
+      iconSize: 32.0,
+      onPressed: onNext,
+    ),
+  );
+}
+
+/// A full-featured audio player widget with a progress bar, play/pause,
+/// replay, download placeholder, and volume control implemented as a stateless widget.
+class AudioPlayerFull extends StatelessWidget with PlayerController {
+  final MediaItem mediaItem;
   @override
-  void initState() {
-    super.initState();
-    if (!widget.loadOnDemand) {
-      _loadAudio();
+  final bool needVolumeControl;
+  @override
+  final bool needDownloadButton;
+  final bool playerMode;
+  final ValueNotifier<bool> _hasLoadedNotifier = ValueNotifier(false);
+
+  /// Creates a new AudioPlayerFull widget
+  ///
+  /// [mediaItem] contains details of the audio to play
+  /// [supportsPlaylistControls] determines if next/previous buttons should be shown
+  /// [needVolumeControl] determines if volume slider should be shown
+  /// [needDownloadButton] determines if download button should be shown
+  AudioPlayerFull({
+    super.key,
+    required this.mediaItem,
+    this.needVolumeControl = true,
+    this.needDownloadButton = true,
+    this.playerMode = false,
+  });
+
+  /// Initialize audio
+  Future<void> loadAudio({Duration? startPosition}) async {
+    await AppGlobals.audioHandler.updateQueue([mediaItem]);
+    await AppGlobals.audioHandler.skipToQueueItem(0);
+    if (startPosition != null) {
+      await AppGlobals.audioHandler.seek(startPosition);
     }
-  }
-
-  Future<void> _loadAudio() async {
-    if (_hasLoadedAudio) return;
-
-    await AppGlobals.audioHandler.loadAudioSource(
-      url: widget.url,
-      title: widget.title,
-      artist: widget.artist,
-      artUrl: widget.artUrl,
-      skipSeconds: widget.skipSeconds,
-    );
-    setState(() {
-      _hasLoadedAudio = true;
-    });
   }
 
   @override
   bool get isVideo => false;
+  bool get isPlaying =>
+      AppGlobals.audioHandler.isPlaying && _hasLoadedNotifier.value;
+  @override
+  bool get supportsPlaylistControls => playerMode;
+
+  // Alternative async method to get the current position
+  Future<Duration> getCurrentPosition() async {
+    if (!_hasLoadedNotifier.value) return Duration.zero;
+    return AppGlobals.audioHandler.currentPosition;
+  }
 
   @override
   void onDownload(BuildContext context) async {
-    await downloadToDevice(context, widget.url);
+    await downloadToDevice(context, mediaItem.id);
   }
 
   @override
   void onPlay() async {
-    if (widget.loadOnDemand && !_hasLoadedAudio) {
-      await _loadAudio();
+    // Check if we need to load the audio first
+    if (!_hasLoadedNotifier.value) {
+      await loadAudio();
+      _hasLoadedNotifier.value = true;
     }
     AppGlobals.audioHandler.play();
   }
@@ -253,7 +314,7 @@ class _AudioPlayerFullState extends State<AudioPlayerFull>
   @override
   void onReplay() {
     AppGlobals.audioHandler.seek(
-      Duration(seconds: widget.skipSeconds?.toInt() ?? 0),
+      Duration(seconds: mediaItem.extras?['skipSeconds']?.toInt() ?? 0),
     );
   }
 
@@ -263,30 +324,88 @@ class _AudioPlayerFullState extends State<AudioPlayerFull>
   }
 
   @override
+  void onNext() {
+    if (!playerMode) return;
+    AppGlobals.audioHandler.skipToNext();
+  }
+
+  @override
+  void onPrevious() {
+    if (!playerMode) return;
+    AppGlobals.audioHandler.skipToPrevious();
+  }
+
+  @override
   Stream<PositionData> getPositionDataStream() {
-    if (!_hasLoadedAudio) return super.getPositionDataStream();
-    return AppGlobals.audioHandler.customPositionDataStream;
+    if (!_hasLoadedNotifier.value) return super.getPositionDataStream();
+    return AppGlobals.audioHandler.positionDataStream;
   }
 
   @override
   Stream<PlayerState> getPlayerStateStream() {
-    if (!_hasLoadedAudio) return super.getPlayerStateStream();
-    return AppGlobals.audioHandler.playbackState.map((state) {
-      final processingState = switch (state.processingState) {
-        AudioProcessingState.idle => ProcessingState.idle,
-        AudioProcessingState.loading => ProcessingState.loading,
-        AudioProcessingState.buffering => ProcessingState.buffering,
-        AudioProcessingState.ready => ProcessingState.ready,
-        AudioProcessingState.completed => ProcessingState.completed,
-        AudioProcessingState.error => ProcessingState.idle,
-      };
-      return PlayerState(state.playing, processingState);
-    });
+    if (!_hasLoadedNotifier.value) return super.getPlayerStateStream();
+    return AppGlobals.audioHandler.playerStateStream;
   }
 
   @override
   Widget build(BuildContext context) {
-    return buildPlayerControls(context);
+    // Check if this is the current source when widget is built
+    Future.microtask(() async {
+      final bool isCurrentSource = await AppGlobals.audioHandler
+          .isCurrentSource(mediaItem.id);
+      if (isCurrentSource) {
+        _hasLoadedNotifier.value = true;
+      }
+    });
+    return ValueListenableBuilder<bool>(
+      valueListenable: _hasLoadedNotifier,
+      builder: (context, _, _) {
+        return buildPlayerControls(context);
+      },
+    );
+  }
+}
+
+class AudioPlayerWithMv extends AudioPlayerFull {
+  final MVPlayer mvPlayer;
+  AudioPlayerWithMv({
+    super.key,
+    required super.mediaItem,
+    required this.mvPlayer,
+    super.playerMode,
+  });
+  @override
+  Future<void> loadAudio({Duration? startPosition}) async {
+    developer.log(startPosition.toString(), name: 'AudioPlayerWithMv');
+    await super.loadAudio(startPosition: startPosition);
+    mvPlayer.onSeek(
+      startPosition ??
+          Duration(seconds: mediaItem.extras?['skipSeconds']?.toInt() ?? 0),
+    );
+  }
+
+  @override
+  void onPlay() {
+    super.onPlay();
+    mvPlayer.onPlay();
+  }
+
+  @override
+  void onPause() {
+    super.onPause();
+    mvPlayer.onPause();
+  }
+
+  @override
+  void onReplay() {
+    super.onReplay();
+    mvPlayer.onReplay();
+  }
+
+  @override
+  void onSeek(Duration position) {
+    super.onSeek(position);
+    mvPlayer.onSeek(position);
   }
 }
 
@@ -403,33 +522,82 @@ class AudioService {
   }
 }
 
-/// A video player implementation using PlayerController and video_player package
-class MVPlayer extends StatefulWidget {
+/// Video player
+class MVPlayer extends StatelessWidget with PlayerController {
   final String videoUrl;
   final int skipSeconds;
+  final VideoPlayerController videoController;
+  final bool isInitialized;
+  final StreamController<VideoPlayerValue> videoStateController;
 
-  const MVPlayer({super.key, required this.videoUrl, this.skipSeconds = 0});
-  @override
-  State<MVPlayer> createState() => _MVPlayerState();
-}
+  /// Creates a new MVPlayer widget
+  ///
+  /// [videoUrl] is the URL of the video to play
+  /// [skipSeconds] is the number of seconds to skip at the beginning of the video
+  /// [videoController] is the externally managed VideoPlayerController
+  /// [isInitialized] indicates if the controller is ready to use
+  /// [videoStateController] is the stream controller for video state updates
+  const MVPlayer({
+    super.key,
+    required this.videoUrl,
+    this.skipSeconds = 0,
+    required this.videoController,
+    required this.isInitialized,
+    required this.videoStateController,
+  });
 
-class _MVPlayerState extends State<MVPlayer> with PlayerController {
-  VideoPlayerController? _videoController;
-  bool _isInitialized = false;
-  bool _isLoading = false;
-  final StreamController<VideoPlayerValue> _videoStateController =
-      StreamController<VideoPlayerValue>.broadcast();
+  /// Factory method to create an MVPlayer with its controller
+  /// This handles the initialization that was previously in the StatefulWidget
+  static Future<MVPlayer> create({
+    Key? key,
+    required String videoUrl,
+    int skipSeconds = 0,
+  }) async {
+    // Create state controller
+    final videoStateController = StreamController<VideoPlayerValue>.broadcast();
 
-  @override
-  void initState() {
-    super.initState();
-    _initVideoPlayer();
+    // Create and initialize video controller
+    final videoController = VideoPlayerController.networkUrl(
+      Uri.parse(videoUrl),
+      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+    );
+
+    // Add listener to update state
+    videoController.addListener(() {
+      if (videoStateController.hasListener) {
+        videoStateController.add(videoController.value);
+      }
+    });
+
+    // Initialize controller
+    bool isInitialized = false;
+    try {
+      await videoController.initialize();
+      await videoController.setLooping(false);
+      await videoController.seekTo(Duration(seconds: skipSeconds));
+      isInitialized = true;
+    } catch (e) {
+      developer.log(
+        'Error initializing video controller: $e',
+        name: 'MVPlayer',
+      );
+    }
+
+    // Return constructed widget
+    return MVPlayer(
+      key: key,
+      videoUrl: videoUrl,
+      skipSeconds: skipSeconds,
+      videoController: videoController,
+      isInitialized: isInitialized,
+      videoStateController: videoStateController,
+    );
   }
 
   @override
   Stream<PositionData> getPositionDataStream() {
-    if (!_isInitialized) return super.getPositionDataStream();
-    return _videoStateController.stream.map((videoPlayerValue) {
+    if (!isInitialized) return super.getPositionDataStream();
+    return videoStateController.stream.map((videoPlayerValue) {
       final currentPosition = videoPlayerValue.position;
       final currentDuration = videoPlayerValue.duration;
       final currentBufferedPosition =
@@ -446,13 +614,10 @@ class _MVPlayerState extends State<MVPlayer> with PlayerController {
 
   @override
   Stream<PlayerState> getPlayerStateStream() {
-    if (!_isInitialized) return super.getPlayerStateStream();
-    developer.log(
-      'VideoPlayerController: ${_videoController?.value}',
-      name: 'MVPlayer',
-    );
+    if (!isInitialized) return super.getPlayerStateStream();
+
     // Map video controller stream to PlayerState
-    return _videoStateController.stream.map((value) {
+    return videoStateController.stream.map((value) {
       final bool isPlaying = value.isPlaying;
 
       ProcessingState state = ProcessingState.idle;
@@ -465,72 +630,46 @@ class _MVPlayerState extends State<MVPlayer> with PlayerController {
     }).asBroadcastStream();
   }
 
-  Future<void> _initVideoPlayer() async {
-    _videoController = VideoPlayerController.networkUrl(
-      Uri.parse(widget.videoUrl),
-    );
-
-    try {
-      _videoController!.addListener(_updateVideoState);
-      await _videoController!.initialize();
-      await _videoController!.setLooping(false);
-      await _videoController!.seekTo(Duration(seconds: widget.skipSeconds));
-      setState(() {
-        _isInitialized = true;
-        _isLoading = false;
-      });
-    } catch (_) {}
-  }
-
-  void _updateVideoState() {
-    if (_videoController != null && _videoStateController.hasListener) {
-      _videoStateController.add(_videoController!.value);
-    }
-  }
-
-  @override
-  void dispose() {
-    _videoController?.dispose();
-    _videoStateController.close();
-    super.dispose();
-  }
-
   @override
   bool get isVideo => true;
 
   @override
   void onDownload(BuildContext context) async {
-    final url = widget.videoUrl;
-    if (url.isEmpty) return;
-    await downloadToDevice(context, url);
+    if (videoUrl.isEmpty) return;
+    await downloadToDevice(context, videoUrl);
   }
 
   @override
   void onPlay() {
-    _videoController!.play();
+    videoController.play();
   }
 
   @override
   void onPause() {
-    _videoController!.pause();
+    videoController.pause();
   }
 
   @override
   void onReplay() {
-    _videoController!.seekTo(Duration(seconds: widget.skipSeconds.toInt()));
-    _videoController!.play();
+    videoController.seekTo(Duration(seconds: skipSeconds));
   }
 
   @override
   void onSeek(Duration position) {
-    _videoController!.seekTo(position);
+    videoController.seekTo(position);
+  }
+
+  void dispose() {
+    videoController.dispose();
+    videoStateController.close();
   }
 
   @override
-  Widget? buildVideoWidget(BuildContext context) {
-    if (_isLoading) {
+  Widget build(BuildContext context) {
+    if (!isInitialized) {
       return const Center(child: CircularProgressIndicator());
     }
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = constraints.maxWidth;
@@ -543,17 +682,12 @@ class _MVPlayerState extends State<MVPlayer> with PlayerController {
           child: Center(
             // Keep the original AspectRatio to avoid video distortion
             child: AspectRatio(
-              aspectRatio: _videoController!.value.aspectRatio,
-              child: VideoPlayer(_videoController!),
+              aspectRatio: videoController.value.aspectRatio,
+              child: VideoPlayer(videoController),
             ),
           ),
         );
       },
     );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return buildPlayerControls(context);
   }
 }

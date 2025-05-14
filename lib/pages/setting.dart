@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:pjsk_viewer/i18n/app_localizations.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
+import 'package:pjsk_viewer/utils/cache_manager.dart';
 import 'package:pjsk_viewer/utils/globals.dart';
+import 'package:pjsk_viewer/utils/helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart' show Phoenix;
 import 'package:pjsk_viewer/utils/database/database.dart';
@@ -22,6 +25,9 @@ class _SettingsPageState extends State<SettingsPage> {
   // Controllers for URL text fields
   final Map<String, TextEditingController> _urlControllers = {};
 
+  String _imageCacheSize = "...";
+  String _audioCacheSize = "...";
+  String link = '';
   @override
   void initState() {
     super.initState();
@@ -30,6 +36,15 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
+    // Get image cache size
+    final imageCacheSize =
+        await PJSKImageCacheManager.calculateImageCacheSize();
+    // Get audio cache size
+    final audioCacheSize = await MusicCacheManager.calculateAudioCacheSize();
+    link = (await getApplicationCacheDirectory()).toString();
+    if (!mounted) {
+      return;
+    }
     setState(() {
       _initial['app_locale'] = prefs.getString('app_locale') ?? 'en';
       _initial['db_update_interval_days'] =
@@ -42,6 +57,8 @@ class _SettingsPageState extends State<SettingsPage> {
       _initial['localization_url'] = prefs.getString('localization_url');
       _initial['api_url'] = prefs.getString('api_url');
       _initial['news_url'] = prefs.getString('news_url');
+      _imageCacheSize = formatSize(imageCacheSize);
+      _audioCacheSize = formatSize(audioCacheSize);
     });
   }
 
@@ -190,7 +207,7 @@ class _SettingsPageState extends State<SettingsPage> {
           // Region selection
           ExpansionTile(
             title: Text(
-              i18n!.translate('common', 'serverRegionSelect').translated,
+              AppGlobals.i18n.translate('common', 'serverRegionSelect').translated,
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             initiallyExpanded: _pending.containsKey('region'),
@@ -199,7 +216,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   return RadioListTile<String>(
                     title: Text(
                       i18n
-                          .translate('common', 'serverRegion', innerKey: region)
+                          !.translate('common', 'serverRegion', innerKey: region)
                           .translated,
                     ),
                     value: region,
@@ -215,7 +232,7 @@ class _SettingsPageState extends State<SettingsPage> {
           // Locale selection
           ExpansionTile(
             title: Text(
-              l10n.translate('settings_language'),
+              AppGlobals.i18n.translate('app', 'settings_language').translated,
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             children:
@@ -235,24 +252,50 @@ class _SettingsPageState extends State<SettingsPage> {
           // Data management section
           ExpansionTile(
             title: Text(
-              l10n.translate('settings_data_management'),
+             AppGlobals.i18n.translate('app', 'settings_data_management').translated,
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             children: [
+              // Add to your settings page
               ListTile(
                 leading: const Icon(Icons.delete),
-                title: Text(l10n.translate('settings_clear_image_cache')),
+                title: Text(
+                  '${AppGlobals.i18n.translate('app', 'settings_clear_image_cache').translated} ($_imageCacheSize)',
+                ),
                 onTap: () async {
-                  // clear cached_network_image files
-                  await DefaultCacheManager().emptyCache();
-                  // evict any in‐memory instances
+                  await clearImageCache();
                   imageCache.clear();
                   imageCache.clearLiveImages();
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          l10n.translate('settings_cache_cleared_message'),
+                          AppGlobals.i18n
+                              .translate(
+                                'app',
+                                'settings_cache_cleared_message',
+                              )
+                              .translated,
+                        ),
+                      ),
+                    );
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete),
+                title: Text(
+                  '${AppGlobals.i18n.translate('app', 'settings_clear_audio_cache').translated} ($_audioCacheSize)',
+                ),
+                onTap: () async {
+                  await clearAudioCache();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          l10n.translate(
+                            'settings_audio_cache_cleared_message',
+                          ),
                         ),
                       ),
                     );
@@ -263,7 +306,7 @@ class _SettingsPageState extends State<SettingsPage> {
               // Datebase reinitialization
               ListTile(
                 leading: const Icon(Icons.restart_alt),
-                title: Text(l10n.translate('settings_reinit_db')),
+                title: Text(AppGlobals.i18n.translate('app', 'settings_reinit_db').translated),
                 onTap: () async {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(

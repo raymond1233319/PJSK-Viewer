@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:pjsk_viewer/utils/cache_manager.dart';
 import 'package:pjsk_viewer/utils/helper.dart';
 
 class FullScreenImagePage extends StatelessWidget {
@@ -26,7 +27,10 @@ class FullScreenImagePage extends StatelessWidget {
             loadingBuilder:
                 (context, event) =>
                     const Center(child: CircularProgressIndicator()),
-            imageProvider: CachedNetworkImageProvider(updatedImageUrl),
+            imageProvider: CachedNetworkImageProvider(
+              updatedImageUrl,
+              cacheManager: PJSKImageCacheManager.instance,
+            ),
             minScale: PhotoViewComputedScale.contained,
             maxScale: PhotoViewComputedScale.contained * 3,
           ),
@@ -83,6 +87,7 @@ Widget buildHeroImageViewer(BuildContext context, String? imageUrl) {
     child: Hero(
       tag: imageUrl,
       child: CachedNetworkImage(
+        cacheManager: PJSKImageCacheManager.instance,
         imageUrl: imageUrl,
         placeholder:
             (_, __) => const SizedBox(

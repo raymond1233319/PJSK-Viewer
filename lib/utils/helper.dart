@@ -386,3 +386,19 @@ LocalizedText replaceMainText(LocalizedText original, String mainText) {
     translatedText: original.japanese,
   );
 }
+
+// Helper method to format the size in a human-readable format
+String formatSize(int bytes) {
+  if (bytes <= 0) return "0 B";
+
+  const suffixes = ["B", "KB", "MB", "GB"];
+  var i = 0;
+  double size = bytes.toDouble();
+
+  while (size > 1024 && i < suffixes.length - 1) {
+    size /= 1024;
+    i++;
+  }
+
+  return "${size.toStringAsFixed(1)} ${suffixes[i]}";
+}

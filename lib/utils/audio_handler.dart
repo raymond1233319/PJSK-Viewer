@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'dart:developer' as developer;
-
+import 'dart:io';
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:pjsk_viewer/utils/cache_manager.dart';
 import 'package:rxdart/rxdart.dart';
 
 // Helper class for position data
@@ -14,9 +17,10 @@ class PositionData {
 
 class PJSKAudioHandler extends BaseAudioHandler with SeekHandler {
   static final AudioPlayer _player = AudioPlayer();
-  String? _currentTrackTitle; // To store track title for notification
-  String? _currentTrackArtist; // To store track artist for notification
-  Uri? _currentArtUri; // To store album art URI
+  int _currentTrackIndex = 0; // To store current track index
+  ValueNotifier<String> currentTrackTitleNotifier = ValueNotifier('');
+  ValueNotifier<String> currentTrackArtistNotifier = ValueNotifier('');
+  ValueNotifier<int> currentTrackIndexNotifier = ValueNotifier(-1);
 
   PJSKAudioHandler() {
     // Listen to playback events from the player and translate them
@@ -25,70 +29,121 @@ class PJSKAudioHandler extends BaseAudioHandler with SeekHandler {
 
     // Listen for when the player finishes a track
     _player.processingStateStream.listen((state) {
-      if (state == ProcessingState.completed) {
-        // Optionally, you can stop the service or prepare for the next track.
-        // For now, it will just show as completed in the notification.
-        // If you want 'replay' behavior, you might call seek(Duration.zero) and pause().
-      }
+      if (state == ProcessingState.completed) skipToNext();
     });
   }
 
   // Helper to load audio and set MediaItem
-  Future<void> loadAudioSource({
-    required String url,
-    String? title,
-    String? artist,
-    String? artUrl,
-    double? skipSeconds,
-  }) async {
-    if (isCurrentSource(url)) {
+  Future<void> _loadAudioSource({required MediaItem myMediaItem}) async {
+    final url = myMediaItem.id;
+    if (await isCurrentSource(url)) {
+      return;
+    }
+    try {
+      File cachedFile = await getCachedAudioFile(url);
+      AudioSource source = ProgressiveAudioSource(
+        Uri.file(cachedFile.path),
+        tag: url,
+      );
+
+      await _player.setAudioSource(
+        source,
+        initialPosition: Duration(
+          seconds: myMediaItem.extras?['skipSeconds']?.toInt() ?? 0,
+        ),
+      );
+      currentTrackArtistNotifier.value = myMediaItem.artist ?? '';
+      currentTrackTitleNotifier.value = myMediaItem.title;
+
+      // Notify the system about the new media item
+      mediaItem.add(myMediaItem.copyWith(duration: _player.duration));
+    } catch (e) {
+      developer.log('Error loading audio source: $e', name: 'PJSKAudioHandler');
+    }
+  }
+
+  // Clear the audio queue
+  Future<void> clearQueue() async {
+    while (queue.value.isNotEmpty) {
+      queue.value.removeLast();
+    }
+  }
+
+  /// Update the entire queue with a new list of items
+  @override
+  Future<void> updateQueue(List<MediaItem> newQueue) async {
+    clearQueue();
+    for (var item in newQueue) {
+      queue.value.add(item);
+    }
+  }
+
+  @override
+  Future<void> skipToQueueItem(int index) async {
+    final currentQueue = queue.value;
+
+    if (index < 0 || index >= currentQueue.length) {
       return;
     }
 
-    _currentTrackTitle = title;
-    _currentTrackArtist = artist;
-    _currentArtUri = artUrl != null ? Uri.parse(artUrl) : null;
-    try {
-      MediaItem mediaItemToUse = MediaItem(
-        id: url,
-        title: _currentTrackTitle!,
-        artist: _currentTrackArtist,
-        artUri: _currentArtUri,
-        displayTitle: _currentTrackTitle,
-        displaySubtitle: _currentTrackArtist,
-      );
-      AudioSource source = AudioSource.uri(Uri.parse(url), tag: mediaItemToUse);
+    // Get the MediaItem at the specified index
+    final myMediaItem = currentQueue[index];
+    _currentTrackIndex = index;
+    currentTrackIndexNotifier.value = index;
+    // Load this MediaItem
+    await _loadAudioSource(myMediaItem: myMediaItem);
+    prefetchUpcomingTracks();
+  }
 
-      await _player.setAudioSource(source);
-      await _player.seek(Duration(seconds: skipSeconds?.toInt() ?? 0));
+  /// Prefetch upcoming tracks in the queue
+  Future<void> prefetchUpcomingTracks() async {
+    if (queue.value.isEmpty) {
+      return;
+    }
 
-      // Notify the system about the new media item
-      mediaItem.add(mediaItemToUse.copyWith(duration: _player.duration));
-    } catch (_) {}
+    final currentQueue = queue.value;
+
+    // Start prefetching from the next track after current
+    for (int i = 1; i <= 5; i++) {
+      final nextIndex = (_currentTrackIndex + i) % currentQueue.length;
+      if (nextIndex == _currentTrackIndex) continue;
+
+      final nextItem = currentQueue[nextIndex];
+      final url = nextItem.id;
+
+      // Check if already cached
+      if (await isAudioCached(url)) {
+        developer.log(
+          'Track already cached: ${nextItem.title}',
+          name: 'PJSKAudioHandler',
+        );
+        continue;
+      }
+
+      try {
+        // Download the audio file
+        await getCachedAudioFile(url);
+      } catch (e) {
+        developer.log(
+          'Error prefetching track: $url - $e',
+          name: 'PJSKAudioHandler',
+        );
+      }
+      // Start prefetching in the background
+      developer.log('Prefetching track: $url', name: 'PJSKAudioHandler');
+    }
   }
 
   /// Check if the current audio source matches the given URL
-  static bool isCurrentSource(String url) {
+  Future<bool> isCurrentSource(String url) async {
     // Check if we have an active source
     if (_player.audioSource == null) {
       return false;
     }
-
-    // If the current source is a ClippingAudioSource, we need to check its child
-    if (_player.audioSource is ClippingAudioSource) {
-      final clippingSource = _player.audioSource as ClippingAudioSource;
-      final uriSource = clippingSource.child;
-      return uriSource.uri.toString() == url;
-    }
-
-    // Direct check for UriAudioSource
-    if (_player.audioSource is UriAudioSource) {
-      final uriSource = _player.audioSource as UriAudioSource;
-      return uriSource.uri.toString() == url;
-    }
-
-    return false;
+    return mediaItem.value?.id == url;
   }
+
+  bool get isPlaying => _player.playing;
 
   @override
   Future<void> play() => _player.play();
@@ -100,10 +155,46 @@ class PJSKAudioHandler extends BaseAudioHandler with SeekHandler {
   Future<void> seek(Duration position) => _player.seek(position);
 
   @override
+  Future<void> skipToNext() async {
+    final currentQueue = queue.value;
+
+    if (_currentTrackIndex + 1 < currentQueue.length) {
+      _currentTrackIndex++;
+      currentTrackIndexNotifier.value = _currentTrackIndex;
+      await skipToQueueItem(_currentTrackIndex);
+    } else {
+      await skipToQueueItem(0);
+    }
+    // prefetch upcoming tracks
+    prefetchUpcomingTracks();
+  }
+
+  @override
+  Future<void> skipToPrevious() async {
+    final currentQueue = queue.value;
+    developer.log('Current Queue: $currentQueue');
+    if (_currentTrackIndex - 1 >= 0) {
+      _currentTrackIndex--;
+      currentTrackIndexNotifier.value = _currentTrackIndex;
+      await skipToQueueItem(_currentTrackIndex);
+    } else {
+      await skipToQueueItem(currentQueue.length - 1);
+    }
+  }
+
+  @override
   Future<void> stop() async {
     await _player.stop();
     await super.stop();
   }
+
+  int get currentTrackIndex => _currentTrackIndex;
+
+  MediaItem? get currentMediaItem => mediaItem.value;
+
+  // Get whether the current media item is in player mode
+  bool get isPlayerMode => currentMediaItem?.extras?['playerMode'] ?? false;
+
 
   /// Transform a just_audio event into an audio_service state.
   PlaybackState _transformEvent(PlaybackEvent event) {
@@ -114,7 +205,7 @@ class PJSKAudioHandler extends BaseAudioHandler with SeekHandler {
         MediaControl.pause,
         MediaControl.skipToNext,
       ],
-      systemActions: const {
+      systemActions: {
         MediaAction.seek,
         MediaAction.seekForward,
         MediaAction.seekBackward,
@@ -136,7 +227,7 @@ class PJSKAudioHandler extends BaseAudioHandler with SeekHandler {
     );
   }
 
-  Stream<PositionData> get customPositionDataStream =>
+  Stream<PositionData> get positionDataStream =>
       Rx.combineLatest3<Duration, Duration, Duration?, PositionData>(
         _player.positionStream,
         _player.bufferedPositionStream,
@@ -145,8 +236,21 @@ class PJSKAudioHandler extends BaseAudioHandler with SeekHandler {
             PositionData(position, buffered, duration ?? Duration.zero),
       ).asBroadcastStream();
 
+  Stream<PlayerState> get playerStateStream =>
+      Rx.combineLatest3<bool, ProcessingState, Duration, PlayerState>(
+        _player.playingStream,
+        _player.processingStateStream,
+        _player.positionStream,
+        (playing, processingState, position) {
+          return PlayerState(playing, processingState);
+        },
+      ).asBroadcastStream();
+
   Stream<double> get volumeStream => _player.volumeStream;
+
   Future<void> setVolume(double volume) => _player.setVolume(volume);
+
+  Duration get currentPosition => _player.position;
 
   Stream<ProcessingState> get processingStateStream =>
       _player.processingStateStream;

@@ -6,6 +6,7 @@ import 'package:pjsk_viewer/i18n/app_localizations.dart';
 import 'package:pjsk_viewer/pages/card_detail.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
 import 'package:pjsk_viewer/pages/index.dart';
+import 'package:pjsk_viewer/utils/cache_manager.dart';
 import 'package:pjsk_viewer/utils/database/card_database.dart';
 import 'package:pjsk_viewer/utils/helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -163,6 +164,7 @@ class _CardIndexPageState extends State<CardIndexPage> {
             fit: StackFit.expand,
             children: [
               CachedNetworkImage(
+                cacheManager: PJSKImageCacheManager.instance,
                 imageUrl: imageUrl,
                 fit: BoxFit.contain,
                 placeholder:
@@ -176,6 +178,7 @@ class _CardIndexPageState extends State<CardIndexPage> {
                   }
                   // if the image fails to load, show the alternate image
                   return CachedNetworkImage(
+                    cacheManager: PJSKImageCacheManager.instance,
                     imageUrl: altImageUrl!,
                     fit: BoxFit.contain,
                     placeholder:

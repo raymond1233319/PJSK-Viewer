@@ -7,6 +7,7 @@ import 'package:pjsk_viewer/i18n/app_localizations.dart';
 import 'package:pjsk_viewer/pages/event_detail.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
 import 'package:pjsk_viewer/pages/index.dart';
+import 'package:pjsk_viewer/utils/cache_manager.dart';
 import 'package:pjsk_viewer/utils/database/event_database.dart';
 import 'package:pjsk_viewer/utils/globals.dart';
 
@@ -100,6 +101,7 @@ class _EventPageState extends State<EventPage> {
       children: [
         logoUrl != null
             ? CachedNetworkImage(
+              cacheManager: PJSKImageCacheManager.instance,
               imageUrl: logoUrl,
               fit: BoxFit.cover,
               placeholder:

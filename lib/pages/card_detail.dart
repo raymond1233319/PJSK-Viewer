@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:pjsk_viewer/i18n/app_localizations.dart';
-import 'package:pjsk_viewer/pages/event_detail.dart';
 import 'package:pjsk_viewer/utils/database/card_database.dart';
 import 'package:pjsk_viewer/utils/detail_builder.dart';
 import 'package:pjsk_viewer/utils/globals.dart';

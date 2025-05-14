@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
 import 'package:pjsk_viewer/utils/audio_handler.dart';
 
@@ -13,6 +14,7 @@ class AppGlobals {
   static String newsUrl = 'https://production-web.sekai.colorfulpalette.org/';
   static late PJSKAudioHandler audioHandler;
   static late ContentLocalizations i18n;
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   static void reset() {
     databaseUrl = 'https://sekai-world.github.io';
     assetUrl = 'https://storage.sekai.best';

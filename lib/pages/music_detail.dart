@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:audio_service/audio_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:pjsk_viewer/pages/image_view.dart';
@@ -31,31 +33,61 @@ class _MusicDetailPageState extends State<MusicDetailPage> {
   List<dynamic> _musicOriginals = [];
   List<dynamic> _eventMusics = [];
   List<Map<String, dynamic>> _eventList = [];
-  final PageController _pageController = PageController();
-  int _currentPage = 0;
+  int _musicId = 0;
+  bool _playerMode = false;
+  StreamSubscription<int>? _trackIndexSubscription;
 
   @override
   void initState() {
     super.initState();
+    _musicId = widget.musicId;
+    setPlayerMode();
     _fetchMusicDetails();
-    _pageController.addListener(() {
-      final newPage = _pageController.page?.round() ?? 0;
-      if (_currentPage != newPage) {
-        setState(() => _currentPage = newPage);
-      }
-    });
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _trackIndexSubscription?.cancel();
     super.dispose();
+  }
+
+  void setPlayerMode() {
+    setState(() {
+      _playerMode =
+          AppGlobals.audioHandler.isPlayerMode &&
+          widget.musicId ==
+              AppGlobals.audioHandler.currentMediaItem?.extras?['trackId'];
+      if (_playerMode) {
+        _setupTrackChangeListener();
+      }
+    });
+  }
+
+  // Method to listen for track changes
+  void _setupTrackChangeListener() {
+    _trackIndexSubscription = Stream.periodic(const Duration(seconds: 3))
+        .asyncMap(
+          (_) => AppGlobals.audioHandler.currentTrackIndexNotifier.value,
+        )
+        .distinct()
+        .listen((_) async {
+          developer.log(
+            'Current Track Index: ${AppGlobals.audioHandler.currentMediaItem?.extras?['trackId']}',
+          );
+          if (_musicId ==
+              AppGlobals.audioHandler.currentMediaItem?.extras?['trackId']) {
+            return;
+          }
+          _musicId =
+              AppGlobals.audioHandler.currentMediaItem?.extras?['trackId'];
+          await _fetchMusicDetails();
+        });
   }
 
   Future<void> _fetchMusicDetails() async {
     setState(() => _isLoading = true);
     try {
-      _musicDetails = await MusicDatabase.getMusicById(widget.musicId);
+      _musicDetails = await MusicDatabase.getMusicById(_musicId);
       _vocals =
           json.decode(_musicDetails?['vocals']).cast<Map<String, dynamic>>();
       _outsideCharacterNames = await MusicDatabase.getOutsideCharacterNames();
@@ -136,7 +168,13 @@ class _MusicDetailPageState extends State<MusicDetailPage> {
     final localizations = ContentLocalizations.of(context);
 
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Scaffold(
+        appBar: DetailBuilder.buildAppBar(context, _musicDetails?['title']),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: const Center(child: CircularProgressIndicator()),
+        ),
+      );
     }
     if (_errorMessage != null) {
       return Center(
@@ -148,314 +186,151 @@ class _MusicDetailPageState extends State<MusicDetailPage> {
     }
 
     final original = _musicOriginals.firstWhere(
-      (e) => e['musicId'] == widget.musicId,
+      (e) => e['musicId'] == _musicId,
       orElse: () => null,
     );
     final int? eventId =
         _eventMusics.firstWhere(
-          (e) => e['musicId'] == widget.musicId,
+          (e) => e['musicId'] == _musicId,
           orElse: () => null,
         )?['eventId'];
     final Map<String, dynamic> event = _eventList.firstWhere(
       (e) => e['id'] == eventId,
       orElse: () => {},
     );
-
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: DetailBuilder.buildAppBar(context, _musicDetails?['title']),
-        body: Stack(
+    developer.log(_playerMode.toString());
+    return Scaffold(
+      appBar: DetailBuilder.buildAppBar(context, _musicDetails?['title']),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            PageView(
-              scrollDirection: Axis.vertical, // Change to vertical scrolling
-              physics: const VerticalPageFlipPhysics(),
-              controller: _pageController,
-              children: [
-                // PLAYER PAGE
-                SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      MusicPlayer(
-                        vocals: _vocals,
-                        outsideCharacterNames: _outsideCharacterNames,
-                        musicDetails: _musicDetails,
-                      ),
-                    ],
-                  ),
-                ),
-
-                // DETAILS PAGE
-                SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      DetailBuilder.buildCard(
-                        children: [
-                          // Title and Category
-                          DetailBuilder.buildTextRow(
-                            localizations!
-                                .translate('common', 'title')
-                                .translated,
-                            _musicDetails?['title'],
-                          ),
-                          // ID
-                          DetailBuilder.buildTextRow(
-                            localizations.translate('common', "id").translated,
-                            _musicDetails?['id']?.toString() ?? '-',
-                          ),
-                          // Categories
-                          if (_musicDetails?['categories'] != null)
-                            DetailBuilder.buildTextRow(
-                              localizations
-                                  .translate('music', 'category')
-                                  .translated,
-                              json
-                                  .decode(_musicDetails!['categories'])
-                                  .map(
-                                    (cat) =>
-                                        localizations
-                                            .translate(
-                                              "music",
-                                              "categoryType",
-                                              innerKey: cat,
-                                            )
-                                            .translated,
-                                  )
-                                  .join(", "),
-                            ),
-                          // Creator information
-                          DetailBuilder.buildTextRow(
-                            localizations
-                                .translate('music', 'composer')
-                                .translated,
-                            _musicDetails?['composer'] ?? '-',
-                          ),
-                          DetailBuilder.buildTextRow(
-                            localizations
-                                .translate('music', 'arranger')
-                                .translated,
-                            _musicDetails?['arranger'] ?? '-',
-                          ),
-                          DetailBuilder.buildTextRow(
-                            localizations
-                                .translate('music', 'lyricist')
-                                .translated,
-                            _musicDetails?['lyricist'] ?? '-',
-                          ),
-                          if (_musicDetails?['publishedAt'] != null)
-                            DetailBuilder.buildTextRow(
-                              localizations
-                                      ?.translate('common', 'startAt')
-                                      .translated ??
-                                  'Available From',
-                              formatDate(_musicDetails!['publishedAt']),
-                            ),
-                          // Is Newly Written Music
-                          if (_musicDetails?['isNewlyWrittenMusic'] != null)
-                            DetailBuilder.buildBoolRow(
-                              localizations
-                                  .translate('event', 'newlyWrittenSong')
-                                  .translated,
-                              _musicDetails!['isNewlyWrittenMusic'] == 1,
-                            ),
-                          if (eventId != null)
-                            DetailBuilder.buildEventThumbnail(
-                              context,
-                              eventId,
-                              event['assetbundleName'],
-                            ),
-                          if (original != null)
-                            DetailBuilder.buildDetailRow(
-                              "Original video",
-                              InkWell(
-                                onTap: () async {
-                                  final url = Uri.tryParse(
-                                    original['videoLink'],
-                                  );
-                                  if (url != null) {
-                                    await launchUrl(url);
-                                  }
-                                },
-                                child: const Icon(
-                                  Icons.open_in_new,
-                                  color: Colors.black,
-                                  size: 24,
-                                ),
-                              ),
-                            ),
-                        ],
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 8.0,
-                          horizontal: 16.0,
-                        ),
-                      ),
-
-                      // Difficulties Section
-                      if (_musicDetails?['difficulties'] != null) ...[
-                        Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          margin: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  localizations!
-                                      .translate('music', 'difficulty_plural')
-                                      .translated,
-                                  style:
-                                      Theme.of(context).textTheme.titleMedium,
-                                ),
-                                const SizedBox(height: 12),
-                                ..._buildDifficultyWidgets(
-                                  context,
-                                  json.decode(_musicDetails!['difficulties']),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
+            MusicPlayer(
+              vocals: _vocals,
+              outsideCharacterNames: _outsideCharacterNames,
+              musicDetails: _musicDetails,
+              playerMode: _playerMode,
             ),
-            // Floating section title
-            AnimatedBuilder(
-              animation: _pageController,
-              builder: (context, child) {
-                // Calculate position based on page scroll
-                final pageOffset =
-                    _pageController.hasClients ? _pageController.page ?? 0 : 0;
-                final screenHeight = MediaQuery.of(context).size.height;
-
-                // Position from AppBar height + safeArea
-                final appBarHeight =
-                    Scaffold.of(context).appBarMaxHeight ?? 56.0;
-                final topSafeArea = MediaQuery.of(context).padding.top;
-                final titleHeight = 80.0;
-
-                // Calculate opacity - fade out as we approach page 1
-                final opacity = 1.0 - (pageOffset * 2).clamp(0.0, 1.0);
-
-                // If fully transparent, don't render at all
-                if (opacity <= 0.01) return const SizedBox.shrink();
-
-                double topPosition = 0;
-                if (pageOffset <= 0.1) {
-                  // At the beginning of page 0, title stays at bottom
-                  topPosition = screenHeight - appBarHeight - titleHeight;
-                } else if (pageOffset >= 0.8) {
-                  topPosition = 0;
-                } else {
-                  // During transition (0.1-0.8), animate from bottom to top
-                  final normalizedOffset = (pageOffset - 0.1) / 0.7;
-                  final startPos =
-                      screenHeight - appBarHeight - titleHeight - 16;
-                  final endPos = topSafeArea + appBarHeight + 8;
-                  topPosition =
-                      startPos - (normalizedOffset * (startPos - endPos));
-                }
-
-                return Positioned(
-                  left: 0,
-                  right: 0,
-                  top: topPosition,
-                  child: GestureDetector(
-                    onTap: () {
-                      // Animate to detail page (page index 1) when title is clicked
-                      _pageController.animateToPage(
-                        1,
-                        duration: const Duration(milliseconds: 500),
-                        curve: Curves.easeOutCubic,
-                      );
-                    },
-                    child: Opacity(
-                      opacity: opacity,
-                      child: Container(
-                        color: Colors.transparent,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            DetailBuilder.buildSectionTitle(
-                              context,
-                              'common',
-                              'musicMeta',
-                            ),
-                          ],
-                        ),
+            DetailBuilder.buildSectionTitle(context, 'common', 'musicMeta'),
+            DetailBuilder.buildCard(
+              children: [
+                // Title and Category
+                DetailBuilder.buildTextRow(
+                  localizations!.translate('common', 'title').translated,
+                  _musicDetails?['title'],
+                ),
+                // ID
+                DetailBuilder.buildTextRow(
+                  localizations.translate('common', "id").translated,
+                  _musicDetails?['id']?.toString() ?? '-',
+                ),
+                // Categories
+                if (_musicDetails?['categories'] != null)
+                  DetailBuilder.buildTextRow(
+                    localizations.translate('music', 'category').translated,
+                    json
+                        .decode(_musicDetails!['categories'])
+                        .map(
+                          (cat) =>
+                              localizations
+                                  .translate(
+                                    "music",
+                                    "categoryType",
+                                    innerKey: cat,
+                                  )
+                                  .translated,
+                        )
+                        .join(", "),
+                  ),
+                // Creator information
+                DetailBuilder.buildTextRow(
+                  localizations.translate('music', 'composer').translated,
+                  _musicDetails?['composer'] ?? '-',
+                ),
+                DetailBuilder.buildTextRow(
+                  localizations.translate('music', 'arranger').translated,
+                  _musicDetails?['arranger'] ?? '-',
+                ),
+                DetailBuilder.buildTextRow(
+                  localizations.translate('music', 'lyricist').translated,
+                  _musicDetails?['lyricist'] ?? '-',
+                ),
+                if (_musicDetails?['publishedAt'] != null)
+                  DetailBuilder.buildTextRow(
+                    localizations?.translate('common', 'startAt').translated ??
+                        'Available From',
+                    formatDate(_musicDetails!['publishedAt']),
+                  ),
+                // Is Newly Written Music
+                if (_musicDetails?['isNewlyWrittenMusic'] != null)
+                  DetailBuilder.buildBoolRow(
+                    localizations
+                        .translate('event', 'newlyWrittenSong')
+                        .translated,
+                    _musicDetails!['isNewlyWrittenMusic'] == 1,
+                  ),
+                if (eventId != null)
+                  DetailBuilder.buildEventThumbnail(
+                    context,
+                    eventId,
+                    event['assetbundleName'],
+                  ),
+                if (original != null)
+                  DetailBuilder.buildDetailRow(
+                    "Original video",
+                    InkWell(
+                      onTap: () async {
+                        final url = Uri.tryParse(original['videoLink']);
+                        if (url != null) {
+                          await launchUrl(url);
+                        }
+                      },
+                      child: const Icon(
+                        Icons.open_in_new,
+                        color: Colors.black,
+                        size: 24,
                       ),
                     ),
                   ),
-                );
-              },
+              ],
+              padding: const EdgeInsets.symmetric(
+                vertical: 8.0,
+                horizontal: 16.0,
+              ),
             ),
+
+            // Difficulties Section
+            if (_musicDetails?['difficulties'] != null) ...[
+              Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                margin: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        localizations!
+                            .translate('music', 'difficulty_plural')
+                            .translated,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      ..._buildDifficultyWidgets(
+                        context,
+                        json.decode(_musicDetails!['difficulties']),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
-    );
-  }
-}
-
-class VerticalPageFlipPhysics extends ScrollPhysics {
-  const VerticalPageFlipPhysics({super.parent});
-
-  @override
-  VerticalPageFlipPhysics applyTo(ScrollPhysics? ancestor) {
-    return VerticalPageFlipPhysics(parent: buildParent(ancestor));
-  }
-
-  @override
-  SpringDescription get spring =>
-      const SpringDescription(mass: 80, stiffness: 120, damping: 0.9);
-
-  @override
-  bool get allowImplicitScrolling => false;
-
-  @override
-  Simulation? createBallisticSimulation(
-    ScrollMetrics position,
-    double velocity,
-  ) {
-    // If we're out of range and not moving fast enough to fling in range
-    if ((velocity <= 0.0 && position.pixels <= position.minScrollExtent) ||
-        (velocity >= 0.0 && position.pixels >= position.maxScrollExtent)) {
-      return super.createBallisticSimulation(position, velocity);
-    }
-
-    if (velocity.abs() < 600) {
-      // Page settled on the middle of a page but need to go to next page
-      return ScrollSpringSimulation(
-        spring,
-        position.pixels,
-        position.pixels.round().toDouble(),
-        0.0,
-        tolerance: Tolerance.defaultTolerance,
-      );
-    }
-
-    // Page is flinging to next or previous page
-    final target =
-        velocity > 0.0 ? position.pixels.ceil() : position.pixels.floor();
-
-    return ScrollSpringSimulation(
-      spring,
-      position.pixels,
-      target.toDouble(),
-      velocity,
-      tolerance: Tolerance.defaultTolerance,
     );
   }
 }
@@ -464,12 +339,13 @@ class MusicPlayer extends StatefulWidget {
   final List<Map<String, dynamic>> vocals;
   final List<String> outsideCharacterNames;
   final Map<String, dynamic>? musicDetails;
-
+  final bool playerMode;
   const MusicPlayer({
     super.key,
     required this.vocals,
     required this.outsideCharacterNames,
     required this.musicDetails,
+    this.playerMode = false,
   });
 
   @override
@@ -480,28 +356,46 @@ class _MusicPlayerState extends State<MusicPlayer> {
   int? _selectedVocalIndex;
   bool _showMv = false;
   String? _videoUrl;
-  String? _vocalUrl;
-  String? _vocalName;
-  bool _isLoading = true;
+  bool _isLoading = false;
   bool _isLoadingVocal = true;
-  String _logoUrl = '';
+  final List<AudioPlayerFull> _audioPlayers = [];
+  final List<String> _logoUrls = [];
+  MVPlayer? _mvPlayer;
 
   @override
   void initState() {
     super.initState();
     if (widget.vocals.isNotEmpty) {
       _selectedVocalIndex = 0;
-      _loadSelectedVocal();
+      _loadAllVocals();
     }
     _fetchVideoUrl();
   }
 
   Future<void> _fetchVideoUrl() async {
     try {
+      final mvTypes =
+          json
+              .decode(widget.musicDetails?['categories'] ?? '[]')
+              .cast<String>();
+      final String mvType = mvTypes.firstWhere(
+        (type) => type.startsWith('mv_2d') || type.startsWith('original'),
+        orElse: () => '',
+      );
+      // Determine the correct folder based on MV type
+      String mvFolder = '';
+      if (mvType.startsWith('mv_2d')) {
+        mvFolder = 'sekai_mv';
+      } else if (mvType.startsWith('original')) {
+        mvFolder = 'original_mv';
+      } else {
+        return;
+      }
+
       final id = widget.musicDetails?['id']?.toString() ?? '0000';
       final paddedId = id.padLeft(4, '0');
       final listingUrl = Uri.parse(
-        '${AppGlobals.assetUrl}/?delimiter=%2F&list-type=2&max-keys=500&prefix=live%2F2dmode%2Fsekai_mv%2F$paddedId%2F',
+        '${AppGlobals.assetUrl}/?delimiter=%2F&list-type=2&max-keys=500&prefix=live%2F2dmode%2F$mvFolder%2F$paddedId%2F',
       );
       final response = await http.get(listingUrl);
       if (response.statusCode == 200) {
@@ -521,85 +415,155 @@ class _MusicPlayerState extends State<MusicPlayer> {
           }
         }
         if (mp4Key != null) {
-          developer.log('Found video URL: $mp4Key');
-          _videoUrl = '${AppGlobals.assetUrl}/$mp4Key';
-        } else {
-          throw Exception();
+          setState(() {
+            _videoUrl = '${AppGlobals.assetUrl}/$mp4Key';
+          });
         }
-      } else {
-        throw Exception();
       }
-    } catch (_) {
-      final id = widget.musicDetails?['id'].toString() ?? '0000';
-      _videoUrl =
-          '${AppGlobals.assetUrl}/live/2dmode/sekai_mv/${id.padLeft(4, '0')}/${id.padLeft(4, '0')}.mp4';
-    } finally {
-      setState(() => _isLoading = false);
-    }
+    } catch (_) {}
   }
 
-  void _loadSelectedVocal() async {
-    final vocal = widget.vocals[_selectedVocalIndex!];
-    final bundle = vocal['assetbundleName'] as String;
-    final url = '${AppGlobals.assetUrl}/music/long/$bundle/$bundle.mp3';
-    final assetbundleName =
-        widget.musicDetails?['assetbundleName'] as String? ?? '';
-    _logoUrl =
+  // Helper method to get jacket URL for a vocal
+  String _getJacketUrl(
+    Map<String, dynamic> vocal,
+    String assetbundleName,
+    List<Map<String, dynamic>>? musicAssetVariants,
+  ) {
+    // Default jacket URL
+    String jacketUrl =
         assetbundleName.isNotEmpty
             ? '${AppGlobals.assetUrl}/music/jacket/$assetbundleName/$assetbundleName.webp'
             : '';
+
+    // Check for custom jacket
+    if (musicAssetVariants != null) {
+      final Map<String, dynamic> musicVariant = musicAssetVariants.firstWhere(
+        (e) => e['musicVocalId'] == vocal['id'],
+        orElse: () => <String, dynamic>{},
+      );
+
+      if (musicVariant.isNotEmpty) {
+        if (musicVariant['musicAssetType'] == 'jacket') {
+          jacketUrl =
+              '${AppGlobals.assetUrl}/music/jacket/$assetbundleName/${musicVariant['assetbundleName']}.webp';
+        }
+      }
+    }
+
+    return jacketUrl;
+  }
+
+  // load all vocals at once
+  void _loadAllVocals({MVPlayer? mvPlayer}) async {
+    setState(() {
+      _isLoadingVocal = true;
+    });
+
+    // Get the base asset bundle name for jacket images
+    final assetbundleName =
+        widget.musicDetails?['assetbundleName'] as String? ?? '';
+
+    // Get music asset variants from shared preferences
     final prefs = await SharedPreferences.getInstance();
     final List<Map<String, dynamic>>? musicAssetVariants =
         json
             .decode(prefs.getString('musicAssetVariants') ?? '[]')
             .cast<Map<String, dynamic>>();
+    _audioPlayers.clear();
+    // Process each vocal
+    for (int i = 0; i < widget.vocals.length; i++) {
+      final vocal = widget.vocals[i];
+      final bundle = vocal['assetbundleName'] as String;
+      final url = '${AppGlobals.assetUrl}/music/long/$bundle/$bundle.mp3';
 
-    final Map<String, dynamic>? musicVariant = musicAssetVariants?.firstWhere(
-      (e) => e['musicVocalId'] == vocal['id'],
-      orElse: () => <String, dynamic>{},
-    );
-    if (musicVariant != null && musicVariant.isNotEmpty) {
-      if (musicVariant['musicAssetType'] == 'jacket') {
-        _logoUrl =
-            '${AppGlobals.assetUrl}/music/jacket/$assetbundleName/${musicVariant['assetbundleName']}.webp';
+      if (await AppGlobals.audioHandler.isCurrentSource(url)) {
+        _selectedVocalIndex = i;
       }
-    }
-    setState(() {
-      _vocalUrl = url;
-      _vocalName = MusicDatabase.buildVocalName(
+      // Get jacket URL for this vocal
+      final jacketUrl = _getJacketUrl(
+        vocal,
+        assetbundleName,
+        musicAssetVariants,
+      );
+
+      // Build vocal name
+      final vocalName = MusicDatabase.buildVocalName(
         context,
         vocal,
         widget.outsideCharacterNames,
       );
+
+      // Create MediaItem for this vocal
+      final mediaItem = MediaItem(
+        id: url,
+        title: widget.musicDetails?['title'],
+        artUri: Uri.parse(jacketUrl),
+        extras: {'skipSeconds': widget.musicDetails?["fillerSec"] ?? 0},
+        artist: vocalName,
+      );
+
+      // Set the logo URL
+      _logoUrls.add(jacketUrl);
+
+      // Create an AudioPlayerFull instance for this vocal
+      if (mvPlayer != null) {
+        _audioPlayers.add(
+          AudioPlayerWithMv(
+            mediaItem: mediaItem,
+            mvPlayer: mvPlayer,
+            playerMode: widget.playerMode,
+          ),
+        );
+      }
+      // If no MV player, create a normal AudioPlayerFull instance
+      else {
+        _audioPlayers.add(
+          AudioPlayerFull(mediaItem: mediaItem, playerMode: widget.playerMode),
+        );
+      }
+    }
+    setState(() {
       _isLoadingVocal = false;
     });
   }
 
   // Update the MV toggle function
-  void _toggleMv() {
+  void _toggleMv() async {
+    setState(() {
+      _isLoading = true;
+    });
+    _mvPlayer ??= await MVPlayer.create(videoUrl: _videoUrl!);
+    Duration startPosition =
+        await _audioPlayers[_selectedVocalIndex ?? 0].getCurrentPosition();
+    _mvPlayer!.onSeek(startPosition);
+    _loadAllVocals(mvPlayer: _mvPlayer);
+    if (_audioPlayers[_selectedVocalIndex ?? 0].isPlaying) {
+      _mvPlayer!.onPlay();
+    } else {
+      _mvPlayer!.onPause();
+    }
+
     setState(() {
       _showMv = !_showMv;
+      _isLoading = false;
     });
   }
 
   @override
   void dispose() {
+    _mvPlayer?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading || _isLoadingVocal) {
+    if (_isLoadingVocal || _isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // Check if categories contains 2D MV
-    final bool hasMv =
-        widget.musicDetails?['categories'] != null &&
-        json.decode(widget.musicDetails!['categories']).contains('mv_2d');
     return DetailBuilder.buildCard(
       children: [
-        if (hasMv) ...[
+        if (_videoUrl != null) ...[
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -632,17 +596,19 @@ class _MusicPlayerState extends State<MusicPlayer> {
           ),
           const SizedBox(height: 8),
         ],
-        // Show either video player or image
-        if (!_showMv) buildHeroImageViewer(context, _logoUrl),
+
+        if (!_showMv)
+          buildHeroImageViewer(context, _logoUrls[_selectedVocalIndex ?? 0]),
+        if (_showMv && _mvPlayer != null) _mvPlayer!,
 
         // Vocal selector
-        if (widget.vocals.isNotEmpty && !_showMv) ...[
+        if (widget.vocals.isNotEmpty) ...[
           SizedBox(
             width: double.infinity,
             child: DropdownButton<int>(
               isExpanded: true,
-              value: _selectedVocalIndex,
               itemHeight: null,
+              value: _selectedVocalIndex,
               items:
                   widget.vocals.asMap().entries.map((e) {
                     final caption = e.value['caption'] as String? ?? '';
@@ -675,28 +641,22 @@ class _MusicPlayerState extends State<MusicPlayer> {
                       ),
                     );
                   }).toList(),
-              onChanged: (idx) {
+              onChanged: (idx) async {
+                Duration currentPosition =
+                    await _audioPlayers[_selectedVocalIndex ?? 0]
+                        .getCurrentPosition();
+                await _audioPlayers[idx!].loadAudio(
+                  startPosition: currentPosition,
+                );
                 setState(() {
                   _selectedVocalIndex = idx;
-                  _loadSelectedVocal();
                 });
               },
             ),
           ),
         ],
         const SizedBox(height: 16),
-        _showMv
-            ? MVPlayer(
-              videoUrl: _videoUrl!,
-              skipSeconds: widget.musicDetails?["fillerSec"].toInt() ?? 0,
-            )
-            : AudioPlayerFull(
-              url: _vocalUrl!,
-              title: widget.musicDetails?['title'],
-              artUrl: _logoUrl,
-              skipSeconds: widget.musicDetails?["fillerSec"] ?? 0,
-              artist: _vocalName,
-            ),
+        _audioPlayers[_selectedVocalIndex ?? 0],
       ],
       padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
     );

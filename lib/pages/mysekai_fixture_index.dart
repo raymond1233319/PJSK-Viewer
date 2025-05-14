@@ -5,9 +5,11 @@ import 'package:pjsk_viewer/i18n/app_localizations.dart';
 import 'package:pjsk_viewer/pages/index.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
 import 'package:pjsk_viewer/pages/mysekai_fixture_detail.dart';
+import 'package:pjsk_viewer/utils/cache_manager.dart';
 import 'package:pjsk_viewer/utils/database/my_sekai_database.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pjsk_viewer/utils/globals.dart';
+
 class MySekaiIndexPage extends StatefulWidget {
   const MySekaiIndexPage({super.key});
 
@@ -55,7 +57,6 @@ class _MySekaiIndexPageState extends State<MySekaiIndexPage> {
   }
 
   Widget _buildFixtureItem(BuildContext context, Map<String, dynamic> fixture) {
-    final applocalizations = AppLocalizations.of(context);
     final fixtureId = fixture['id']!;
     final localizedName = fixture['name'];
     final String fixtureAssetName = fixture['assetbundleName'] as String? ?? '';
@@ -76,6 +77,7 @@ class _MySekaiIndexPageState extends State<MySekaiIndexPage> {
 
     final subTitleText = genre;
     final Widget top = CachedNetworkImage(
+      cacheManager: PJSKImageCacheManager.instance,
       imageUrl: thumbnailUrl,
       fit: BoxFit.cover,
       placeholder: (_, __) => const Center(child: CircularProgressIndicator()),
@@ -150,7 +152,7 @@ class _MySekaiIndexPageState extends State<MySekaiIndexPage> {
     return _isLoading
         ? const Center(child: CircularProgressIndicator())
         : IndexPage<Map<String, dynamic>>(
-          title: title,
+          title: AppGlobals.i18n.translate('app', 'my_sekai').translated,
           allItems: _allFixtures,
           showSearch: true,
           searchPredicate:

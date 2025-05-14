@@ -5,9 +5,11 @@ import 'package:intl/intl.dart';
 import 'package:pjsk_viewer/i18n/app_localizations.dart';
 import 'package:pjsk_viewer/pages/gacha_detail.dart';
 import 'package:pjsk_viewer/pages/index.dart';
+import 'package:pjsk_viewer/utils/cache_manager.dart';
 import 'package:pjsk_viewer/utils/database/gacha_database.dart';
 import 'package:pjsk_viewer/i18n/localizations.dart';
 import 'package:pjsk_viewer/utils/globals.dart';
+
 class GachaIndexPage extends StatefulWidget {
   const GachaIndexPage({super.key});
 
@@ -70,6 +72,7 @@ class _GachaIndexPageState extends State<GachaIndexPage> {
     final Widget top =
         logoUrl != null
             ? CachedNetworkImage(
+              cacheManager: PJSKImageCacheManager.instance,
               imageUrl: logoUrl,
               fit: BoxFit.cover,
               placeholder:
@@ -77,6 +80,7 @@ class _GachaIndexPageState extends State<GachaIndexPage> {
               errorWidget: (_, __, ___) {
                 showBanner = true;
                 return CachedNetworkImage(
+                  cacheManager: PJSKImageCacheManager.instance,
                   imageUrl: bannerUrl,
                   fit: BoxFit.cover,
                   placeholder:
