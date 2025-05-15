@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:io';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:just_audio/just_audio.dart';
+import 'package:pjsk_viewer/utils/cache_manager.dart';
 import 'package:pjsk_viewer/utils/globals.dart';
 import 'package:pjsk_viewer/utils/helper.dart';
 import 'package:rxdart/rxdart.dart';
@@ -54,8 +56,10 @@ mixin PlayerController {
             mainAxisSize: MainAxisSize.min,
             children: [
               // Download Button
-              if (needDownloadButton && !supportsPlaylistControls) downloadButton(context, onDownload),
-              if (needDownloadButton && !supportsPlaylistControls) const Spacer(),
+              if (needDownloadButton && !supportsPlaylistControls)
+                downloadButton(context, onDownload),
+              if (needDownloadButton && !supportsPlaylistControls)
+                const Spacer(),
 
               // Add previous song button if supported
               if (supportsPlaylistControls) previousButton(onPrevious),
@@ -411,7 +415,7 @@ class AudioPlayerWithMv extends AudioPlayerFull {
 
 /// A simplified audio player widget with only a play/pause button.
 class SimpleAudioPlayer extends StatelessWidget {
-  final AudioService audioService;
+  final BasicAudioService audioService;
   const SimpleAudioPlayer({super.key, required this.audioService});
 
   @override
@@ -458,17 +462,22 @@ class SimpleAudioPlayer extends StatelessWidget {
                 },
               ),
             ),
-            Tooltip(
-              message: localizations.translate('tooltip_download_audio'),
-              child: IconButton(
-                icon: const Icon(Icons.download),
-                iconSize: 24.0,
-                onPressed: () async {
-                  final url = audioService.currentAudioUrl;
-                  if (url == null) return;
-                  await downloadToDevice(context, url);
-                },
-              ),
+            Builder(
+              builder: (context) {
+                return Tooltip(
+                  message: localizations.translate('tooltip_download_audio'),
+                  child: IconButton(
+                    icon: const Icon(Icons.download),
+                    iconSize: 24.0,
+
+                    onPressed: () async {
+                      final url = audioService.currentAudioUrl;
+                      if (url == null) return;
+                      await downloadToDevice(context, url);
+                    },
+                  ),
+                );
+              },
             ),
           ],
         );
@@ -478,7 +487,7 @@ class SimpleAudioPlayer extends StatelessWidget {
 }
 
 /// A basic AudioService that holds the player & audioExists status.
-class AudioService {
+class BasicAudioService {
   final AudioPlayer player = AudioPlayer();
   bool audioExists = false; // Set to true if an audio URL is valid
   String? currentAudioUrl; // Current audio URL
@@ -493,25 +502,15 @@ class AudioService {
             PositionData(position, buffered, duration ?? Duration.zero),
       ).asBroadcastStream();
 
-  Future<void> loadAudio(String url, {double? skipSeconds}) async {
+  Future<void> loadAudio(String url) async {
     audioExists = false;
     try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        final audioSource = AudioSource.uri(Uri.parse(url));
-
-        AudioSource effectiveSource = audioSource;
-        if (skipSeconds != null && skipSeconds > 0) {
-          effectiveSource = ClippingAudioSource(
-            start: Duration(seconds: skipSeconds.toInt()),
-            child: audioSource,
-          );
-        }
-        await player.setAudioSource(effectiveSource);
-        audioExists = true;
-      } else {
-        audioExists = false;
-      }
+      File file = await MusicCacheManager.getFile(url);
+      if (!await file.exists()) return;
+      AudioSource source = await MusicCacheManager.createCachedAudioSource(url);
+      await player.setAudioSource(source);
+      currentAudioUrl = url;
+      audioExists = true;
     } catch (e) {
       audioExists = false;
     }

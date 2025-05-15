@@ -300,7 +300,6 @@ class FilterBottomSheet<T> extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         if (isSelected) {
-          developer.log('Removing $val from ${filter.header}');
           filter.selectedValues.remove(val);
         } else {
           filter.selectedValues.add(val);

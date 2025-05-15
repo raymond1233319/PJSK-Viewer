@@ -31,7 +31,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
   bool _isLoading = true;
   Map<String, dynamic>? _cardData;
   String? _errorMessage;
-  final AudioService _audioService = AudioService();
+  final BasicAudioService _audioService = BasicAudioService();
   String? _audioUrl; // Store the audio URL
   List<Map<String, dynamic>>? _skillsDetail;
   final ValueNotifier<int> _skillLevel = ValueNotifier<int>(1);
@@ -47,10 +47,6 @@ class _CardDetailPageState extends State<CardDetailPage> {
     try {
       Map<String, dynamic>? results = await CardDatabase.getCardById(
         widget.cardId,
-      );
-      developer.log(
-        'Card ID: ${widget.cardId}, Results: $results',
-        name: 'CardDetailPage',
       );
 
       if (!mounted) return; // Check again before setting state
@@ -344,7 +340,7 @@ class _CardDetailPageState extends State<CardDetailPage> {
                       ),
 
                     // Type
-                    if (_cardData?['gachaTypes'] != null)
+                    if (_cardData?['gachaType'] != null)
                       DetailBuilder.buildTextRow(
                         localizations?.translate('common', 'type').translated ??
                             'Type',

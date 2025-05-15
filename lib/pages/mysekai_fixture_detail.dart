@@ -8,6 +8,7 @@ import 'package:pjsk_viewer/utils/detail_builder.dart';
 import 'package:pjsk_viewer/utils/image_selector.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pjsk_viewer/utils/globals.dart';
+
 class MysekaiFixtureDetailPage extends StatefulWidget {
   final int fixtureId;
   const MysekaiFixtureDetailPage({super.key, required this.fixtureId});
@@ -49,8 +50,7 @@ class _MysekaiFixtureDetailPageState extends State<MysekaiFixtureDetailPage> {
               .decode(pref.getString('mysekaiFixtureTags') ?? '[]')
               .cast<Map<String, dynamic>>();
       setState(() => _isLoading = false);
-    } catch (e) {
-      developer.log('Error loading fixture: $e');
+    } catch (_) {
       setState(() => _isLoading = false);
     }
   }

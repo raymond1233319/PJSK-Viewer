@@ -136,5 +136,7 @@
   "music_shuffle_playlistTab": "Senarai Main",
   "music_shuffle_allMusicTab": "Semua Muzik",
   "music_shuffle_unknownCredits": "Kredit Tidak Diketahui",
-  "music_player": "Pemain Muzik"
+  "music_player": "Pemain Muzik",
+  "settings_audio_cache_cleared_message": "Cache audio telah dikosongkan",
+  "updating_database": "Mengemas kini pangkalan data..."
 }

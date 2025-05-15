@@ -137,5 +137,7 @@
   "music_shuffle_playlistTab": "Llista de reproducció",
   "music_shuffle_allMusicTab": "Tota la música",
   "music_shuffle_unknownCredits": "Crèdits desconeguts",
-  "music_player": "Reproductor de música"
+  "music_player": "Reproductor de música",
+  "settings_audio_cache_cleared_message": "Memòria cau d'àudio esborrada",
+  "updating_database": "Actualitzant la base de dades..."
 }

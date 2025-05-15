@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:developer' as developer;
-import 'dart:io';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
@@ -40,11 +39,12 @@ class PJSKAudioHandler extends BaseAudioHandler with SeekHandler {
       return;
     }
     try {
-      File cachedFile = await getCachedAudioFile(url);
-      AudioSource source = ProgressiveAudioSource(
-        Uri.file(cachedFile.path),
-        tag: url,
-      );
+      AudioSource source =
+          await MusicCacheManager.createCachedAudioSource(
+            url,
+            tag: myMediaItem,
+          ) ??
+          AudioSource.uri(Uri.parse(url), tag: myMediaItem);
 
       await _player.setAudioSource(
         source,
@@ -58,7 +58,7 @@ class PJSKAudioHandler extends BaseAudioHandler with SeekHandler {
       // Notify the system about the new media item
       mediaItem.add(myMediaItem.copyWith(duration: _player.duration));
     } catch (e) {
-      developer.log('Error loading audio source: $e', name: 'PJSKAudioHandler');
+      developer.log('Error loading audio source: $e');
     }
   }
 
@@ -111,23 +111,11 @@ class PJSKAudioHandler extends BaseAudioHandler with SeekHandler {
       final nextItem = currentQueue[nextIndex];
       final url = nextItem.id;
 
-      // Check if already cached
-      if (await isAudioCached(url)) {
-        developer.log(
-          'Track already cached: ${nextItem.title}',
-          name: 'PJSKAudioHandler',
-        );
-        continue;
-      }
-
       try {
         // Download the audio file
-        await getCachedAudioFile(url);
+        await MusicCacheManager.getFile(url);
       } catch (e) {
-        developer.log(
-          'Error prefetching track: $url - $e',
-          name: 'PJSKAudioHandler',
-        );
+        developer.log('Error prefetching track: $url - $e');
       }
       // Start prefetching in the background
       developer.log('Prefetching track: $url', name: 'PJSKAudioHandler');
@@ -194,7 +182,6 @@ class PJSKAudioHandler extends BaseAudioHandler with SeekHandler {
 
   // Get whether the current media item is in player mode
   bool get isPlayerMode => currentMediaItem?.extras?['playerMode'] ?? false;
-
 
   /// Transform a just_audio event into an audio_service state.
   PlaybackState _transformEvent(PlaybackEvent event) {

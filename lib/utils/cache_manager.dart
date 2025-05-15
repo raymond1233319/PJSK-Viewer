@@ -6,7 +6,6 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:http/http.dart' as http;
 import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:http/io_client.dart';
 
 /// Cache manager for music files with longer stalePeriod and more storage
 class MusicCacheManager {
@@ -15,11 +14,12 @@ class MusicCacheManager {
     final appDir = await getApplicationCacheDirectory();
     return '${appDir.path}/$key';
   }
+
   static CacheManager instance = CacheManager(
     Config(
       key,
-      stalePeriod: const Duration(days: 60),
-      maxNrOfCacheObjects: 500,
+      stalePeriod: const Duration(days: 720),
+      maxNrOfCacheObjects: 1000,
       repo: JsonCacheInfoRepository(databaseName: key),
       fileSystem: IOFileSystem(key),
       fileService: HttpFileService(),
@@ -31,17 +31,77 @@ class MusicCacheManager {
     try {
       final appDir = await getApplicationCacheDirectory();
       final musicCacheDir = Directory('${appDir.path}/$key');
-      developer.log(
-        'Audio cache directory: ${musicCacheDir.path}',
-        name: 'CacheManager',
-      );
+      developer.log('Audio cache directory: ${musicCacheDir.path}');
       return await getDirectorySize(musicCacheDir.path);
     } catch (e) {
+      developer.log('Error calculating audio cache size: $e');
+      return 0;
+    }
+  }
+
+  /// Get a cached audio file
+  static Future<File> getCachedFile(String url) async {
+    developer.log('Getting cached audio file: $url', name: 'CacheManager');
+    try {
+      // Generate a unique filename based on the URL
+      final String fileName = generateFileName(url);
+
+      // Determine the application cache directory
+      final Directory appDir = await getApplicationCacheDirectory();
+
+      // Create a subdirectory for music cache if it doesn't exist
+      final Directory cacheDir = Directory('${appDir.path}/$key');
+      if (!await cacheDir.exists()) {
+        await cacheDir.create(recursive: true);
+      }
+
+      // File object pointing to the expected cache location
+      return File('${cacheDir.path}/$fileName.mp3');
+    } catch (_) {
+      return File('');
+    }
+  }
+
+  static Future<File> getFile(String url) async {
+    developer.log('Caching audio file: $url', name: 'CacheManager');
+    try {
+      // Get the cached file
+      final File file = await getCachedFile(url);
+      if (await file.exists()) {
+        return file;
+      }
+
+      // Download the file and save it to the cache
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        await file.writeAsBytes(response.bodyBytes);
+      } else {
+        throw Exception('Failed to download file');
+      }
+      return file;
+    } catch (e) {
+      return File('');
+    }
+  }
+
+  static Future<AudioSource> createCachedAudioSource(
+    String url, {
+    dynamic tag,
+  }) async {
+    try {
+      File file = await getCachedFile(url);
+      if (await file.exists()) {
+        // If the file exists, return a ProgressiveAudioSource
+        return ProgressiveAudioSource(Uri.parse(file.path), tag: tag);
+      }
+      // Create a caching audio source with the remote URL
+      return LockCachingAudioSource(Uri.parse(url), tag: tag, cacheFile: file);
+    } catch (e) {
       developer.log(
-        'Error calculating audio cache size: $e',
+        'Error creating cached audio source: $e',
         name: 'CacheManager',
       );
-      return 0;
+      return ProgressiveAudioSource(Uri.parse(url), tag: tag);
     }
   }
 }
@@ -52,8 +112,8 @@ class PJSKImageCacheManager {
   static CacheManager instance = CacheManager(
     Config(
       key,
-      stalePeriod: const Duration(days: 30),
-      maxNrOfCacheObjects: 2000,
+      stalePeriod: const Duration(days: 720),
+      maxNrOfCacheObjects: 3000,
       repo: JsonCacheInfoRepository(databaseName: key),
       fileSystem: IOFileSystem(key),
       fileService: HttpFileService(),
@@ -76,54 +136,40 @@ class PJSKImageCacheManager {
       return 0;
     }
   }
+
+  static Future<File> getFile(String url) async {
+    try {
+      return instance.getSingleFile(url);
+    } catch (_) {
+      return File('');
+    }
+  }
 }
 
 /// Clear all cached images
 Future<void> clearImageCache() async {
-  await PJSKImageCacheManager.instance.emptyCache();
+  try {
+    // Clear the cache manager instance
+    await PJSKImageCacheManager.instance.emptyCache();
+    final appDir = await getApplicationCacheDirectory();
+    final imageCacheDir = Directory(
+      '${appDir.path}/${PJSKImageCacheManager.key}',
+    );
+    await deleteDirectory(imageCacheDir);
+  } catch (e) {
+    developer.log('Error clearing image cache: $e', name: 'CacheManager');
+  }
 }
 
-/// Get a cached audio file, downloading if necessary
-Future<File> getCachedAudioFile(String url) async {
-  developer.log('Getting cached audio file: $url', name: 'CacheManager');
+/// Clear all cached audio files
+Future<void> clearAudioCache() async {
   try {
-    // Generate a unique filename based on the URL
-    final String fileName = generateFileName(url);
-
-    // Determine the application cache directory
-    final Directory appDir = await getApplicationCacheDirectory();
-
-    // Create a subdirectory for music cache if it doesn't exist
-    final Directory cacheDir = Directory(
-      '${appDir.path}/${MusicCacheManager.key}',
-    );
-    if (!await cacheDir.exists()) {
-      await cacheDir.create(recursive: true);
-    }
-
-    // File object pointing to the expected cache location
-    final File file = File('${cacheDir.path}/$fileName.mp3');
-    developer.log('Cache file path: ${file.path}', name: 'CacheManager');
-
-    // If the file is already downloaded, return it immediately
-    if (await file.exists()) {
-      return file;
-    }
-    final IOClient ioClient = IOClient();
-    final http.Response httpResponse = await ioClient.get(Uri.parse(url));
-    if (httpResponse.statusCode != 200) {
-      throw HttpException(
-        'Failed to download audio file: HTTP ${httpResponse.statusCode}',
-      );
-    }
-    // Write response bytes directly to cache file
-    await file.writeAsBytes(httpResponse.bodyBytes, flush: true);
-    ioClient.close();
-
-    return file;
+    await MusicCacheManager.instance.emptyCache();
+    final appDir = await getApplicationCacheDirectory();
+    final musicCacheDir = Directory('${appDir.path}/${MusicCacheManager.key}');
+    await deleteDirectory(musicCacheDir);
   } catch (e) {
-    developer.log('Error getting cached audio file: $e', name: 'CacheManager');
-    rethrow;
+    developer.log('Error clearing audio cache: $e', name: 'CacheManager');
   }
 }
 
@@ -134,6 +180,7 @@ String generateFileName(String url) {
   return digest.toString();
 }
 
+/// Get the size of a directory
 Future<int> getDirectorySize(String path) async {
   int totalSize = 0;
   final Directory directory = Directory(path);
@@ -151,31 +198,8 @@ Future<int> getDirectorySize(String path) async {
   return totalSize;
 }
 
-Future<AudioSource> createCachedAudioSource(String url, {dynamic tag}) async {
-  developer.log('Creating cached audio source: $url', name: 'CacheManager');
-  try {
-    // Create a caching audio source with the remote URL
-    return LockCachingAudioSource(
-      Uri.parse(url),
-      tag: tag,
-      cacheFile: await getCachedAudioFile(url),
-    );
-  } catch (e) {
-    developer.log(
-      'Error creating cached audio source: $e',
-      name: 'CacheManager',
-    );
-    return ProgressiveAudioSource(Uri.parse(url), tag: tag);
+Future<void> deleteDirectory(Directory directory) async {
+  if (await directory.exists()) {
+    await directory.delete(recursive: true);
   }
-}
-
-/// Check if audio exists in cache and is valid
-Future<bool> isAudioCached(String url) async {
-  final fileInfo = await MusicCacheManager.instance.getFileFromCache(url);
-  return fileInfo != null && !fileInfo.validTill.isBefore(DateTime.now());
-}
-
-/// Clear all cached audio files
-Future<void> clearAudioCache() async {
-  await MusicCacheManager.instance.emptyCache();
 }

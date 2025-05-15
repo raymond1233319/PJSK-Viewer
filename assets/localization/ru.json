@@ -136,5 +136,7 @@
   "music_shuffle_playlistTab": "Плейлист",
   "music_shuffle_allMusicTab": "Вся музыка",
   "music_shuffle_unknownCredits": "Неизвестные авторы",
-  "music_player": "Музыкальный плеер"
+  "music_player": "Музыкальный плеер",
+  "settings_audio_cache_cleared_message": "Аудиокэш очищен",
+  "updating_database": "Обновление базы данных..."
 }

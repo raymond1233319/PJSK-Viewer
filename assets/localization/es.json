@@ -136,5 +136,7 @@
   "music_shuffle_playlistTab": "Lista de reproducción",
   "music_shuffle_allMusicTab": "Toda la música",
   "music_shuffle_unknownCredits": "Créditos desconocidos",
-  "music_player": "Reproductor de música"
+  "music_player": "Reproductor de música",
+  "settings_audio_cache_cleared_message": "Caché de audio borrado",
+  "updating_database": "Actualizando base de datos..."
 }

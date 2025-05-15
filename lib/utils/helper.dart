@@ -10,6 +10,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart' as perm;
+import 'package:pjsk_viewer/utils/cache_manager.dart';
 import 'package:pjsk_viewer/utils/globals.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -283,44 +284,30 @@ Future<void> downloadToDevice(BuildContext context, String url) async {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(content: Text(localizations.translate('downloading_message'))),
   );
+  File file = File('');
+  ShareParams params = ShareParams();
+
+  // Get the file from the cache manager
+  if (url.endsWith('.png') ||
+      url.endsWith('.webp') ||
+      url.endsWith('.jpg') ||
+      url.endsWith('.jpeg')) {
+    file = await PJSKImageCacheManager.getFile(url);
+  } else {
+    file = await MusicCacheManager.getFile(url);
+  }
   try {
     if (Platform.isAndroid) {
-      bool permissionGranted = false;
-      var status = await perm.Permission.storage.status;
-      if (status.isGranted) {
-        permissionGranted = true;
-      } else {
-        status = await perm.Permission.storage.request();
-        if (status.isGranted) {
-          permissionGranted = true;
-        }
-      }
-      if (!permissionGranted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              localizations.translate('storage_permission_required_message'),
-            ),
-          ),
-        );
-      }
-      final fileName = url.split('/').last;
-      final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/$fileName');
-      final respone = await http.get(Uri.parse(url));
-      debugPrint(url);
-      await file.writeAsBytes(respone.bodyBytes);
-      final params = ShareParams(files: [XFile(file.path)]);
-      await SharePlus.instance.share(params);
+      params = ShareParams(files: [XFile(file.path)]);
     }
     if (Platform.isIOS) {
       final box = context.findRenderObject() as RenderBox?;
-      final params = ShareParams(
-        uri: Uri.parse(url),
+      params = ShareParams(
+        files: [XFile(file.path)],
         sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
       );
-      SharePlus.instance.share(params);
     }
+    SharePlus.instance.share(params);
   } catch (e) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

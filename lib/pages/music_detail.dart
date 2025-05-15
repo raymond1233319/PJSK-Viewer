@@ -71,9 +71,6 @@ class _MusicDetailPageState extends State<MusicDetailPage> {
         )
         .distinct()
         .listen((_) async {
-          developer.log(
-            'Current Track Index: ${AppGlobals.audioHandler.currentMediaItem?.extras?['trackId']}',
-          );
           if (_musicId ==
               AppGlobals.audioHandler.currentMediaItem?.extras?['trackId']) {
             return;
@@ -198,7 +195,6 @@ class _MusicDetailPageState extends State<MusicDetailPage> {
       (e) => e['id'] == eventId,
       orElse: () => {},
     );
-    developer.log(_playerMode.toString());
     return Scaffold(
       appBar: DetailBuilder.buildAppBar(context, _musicDetails?['title']),
       body: SingleChildScrollView(

@@ -136,5 +136,7 @@
   "music_shuffle_playlistTab": "قائمة التشغيل",
   "music_shuffle_allMusicTab": "كل الموسيقى",
   "music_shuffle_unknownCredits": "اعتمادات غير معروفة",
-  "music_player": "مشغل موسيقى"
+  "music_player": "مشغل موسيقى",
+  "settings_audio_cache_cleared_message": "تم مسح ذاكرة التخزين المؤقت للصوت",
+  "updating_database": "جارٍ تحديث قاعدة البيانات..."
 }

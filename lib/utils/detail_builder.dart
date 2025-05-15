@@ -345,7 +345,7 @@ class DetailBuilder {
   }
 
   static Widget buildGachaPhase(LocalizedText value, String audioUrl) {
-    final audioService = AudioService();
+    final audioService = BasicAudioService();
     // Note: Context is obtained within the FutureBuilder below
     return FutureBuilder<void>(
       future: audioService.loadAudio(audioUrl),
@@ -380,6 +380,12 @@ class DetailBuilder {
                       Text(
                         value.translated,
                         style: TextStyle(color: Colors.grey[600]),
+                        textAlign: TextAlign.center,
+                      ),
+                    if (snapshot.hasError)
+                      Text(
+                        snapshot.error.toString(),
+                        style: const TextStyle(color: Colors.red),
                         textAlign: TextAlign.center,
                       ),
                   ],

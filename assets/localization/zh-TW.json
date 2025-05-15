@@ -136,5 +136,7 @@
   "music_shuffle_playlistTab": "播放清單",
   "music_shuffle_allMusicTab": "所有音樂",
   "music_shuffle_unknownCredits": "未知製作人員",
-  "music_player": "音樂播放器"
+  "music_player": "音樂播放器",
+  "settings_audio_cache_cleared_message": "音訊快取已清除",
+  "updating_database": "正在更新資料庫..."
 }

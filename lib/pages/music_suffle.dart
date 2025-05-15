@@ -333,10 +333,6 @@ class _MusicShufflePageState extends State<MusicShufflePage> {
           }
           return true;
         }).toList();
-    developer.log(
-      'Filtered items: ${filtered.length}',
-      name: 'MusicShufflePage',
-    );
     setState(() {
       _lazyLoad.updateFilteredItems(filtered);
       // Scroll back to top
@@ -467,10 +463,6 @@ class _MusicShufflePageState extends State<MusicShufflePage> {
 
   /// Load a saved playlist
   void _loadPlaylist(Map<String, dynamic> playlist) {
-    developer.log(
-      'Loading playlist: ${playlist.toString()}',
-      name: 'MusicShufflePage',
-    );
     // Extract track IDs from the playlist
     final trackIds =
         List<dynamic>.from(playlist['tracks']).map((t) => t['id']).toList();
@@ -896,7 +888,6 @@ class _MusicShufflePageState extends State<MusicShufflePage> {
         if (musicVocalType != vocalType && musicVocalType != vocalType2) {
           continue;
         }
-        developer.log('Vocal Type: $musicVocalType, $vocalType, $vocalType2');
         // Check if this track+vocal is already in the playlist
         final existingIndex = _playlistItems.indexWhere(
           (item) =>

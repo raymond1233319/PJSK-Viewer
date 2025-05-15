@@ -367,6 +367,10 @@ class CardDatabase {
       };
 
       card['gachaType'] = cardSupplyTypeMap[card['cardSupplyId']] ?? '';
+      developer.log(
+        'Card ID: $id, Gacha Type: ${card['gachaType']}',
+        name: 'CardDatabase.getCardById',
+      );
 
       return card;
     } catch (e) {

@@ -136,5 +136,7 @@
   "music_shuffle_playlistTab": "재생 목록",
   "music_shuffle_allMusicTab": "모든 음악",
   "music_shuffle_unknownCredits": "알 수 없는 크레딧",
-  "music_player": "음악 플레이어"
+  "music_player": "음악 플레이어",
+  "settings_audio_cache_cleared_message": "오디오 캐시가 삭제되었습니다",
+  "updating_database": "데이터베이스 업데이트 중..."
 }

@@ -136,5 +136,7 @@
   "music_shuffle_playlistTab": "Playlist",
   "music_shuffle_allMusicTab": "Alle Musik",
   "music_shuffle_unknownCredits": "Unbekannte Mitwirkende",
-  "music_player": "Musik-Player"
+  "music_player": "Musik-Player",
+  "settings_audio_cache_cleared_message": "Audio-Cache geleert",
+  "updating_database": "Datenbank wird aktualisiert..."
 }

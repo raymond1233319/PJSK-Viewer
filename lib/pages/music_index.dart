@@ -105,9 +105,8 @@ class _MusicIndexPageState extends State<MusicIndexPage> {
       _lyricistOptions = resultsLists[0];
       _composerOptions = resultsLists[1];
       _arrangerOptions = resultsLists[2];
-    } catch (e) {
+    } catch (_) {
       _musicItems = [];
-      developer.log('Failed to load music items: $e', name: 'MusicIndexPage');
     } finally {
       setState(() => _isLoading = false);
     }

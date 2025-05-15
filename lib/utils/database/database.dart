@@ -157,7 +157,7 @@ Future<void> databaseInitialization(void Function(String) onProgress) async {
       'mysekaiFixtureTags',
       'musicOriginals',
       'eventMusics',
-      'musicAssetVariants'
+      'musicAssetVariants',
     ],
   );
 
@@ -385,7 +385,9 @@ Future<void> updateDatabase(context) async {
         builder: (context, setState) {
           setDialogState = setState;
           return AlertDialog(
-            title: const Text('Updating Database'),
+            title: Text(
+              AppGlobals.i18n.translate('app', 'updating_database').translated,
+            ),
             content: SizedBox(
               width: double.maxFinite,
               height: 500,

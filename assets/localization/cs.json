@@ -136,5 +136,7 @@
   "music_shuffle_playlistTab": "Seznam skladeb",
   "music_shuffle_allMusicTab": "Veškerá hudba",
   "music_shuffle_unknownCredits": "Neznámé kredity",
-  "music_player": "Hudební přehrávač"
+  "music_player": "Hudební přehrávač",
+  "settings_audio_cache_cleared_message": "Mezipaměť zvuku vymazána",
+  "updating_database": "Aktualizace databáze..."
 }

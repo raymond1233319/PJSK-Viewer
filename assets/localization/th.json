@@ -136,5 +136,7 @@
   "music_shuffle_playlistTab": "เพลย์ลิสต์",
   "music_shuffle_allMusicTab": "เพลงทั้งหมด",
   "music_shuffle_unknownCredits": "ไม่ทราบเครดิต",
-  "music_player": "เครื่องเล่นเพลง"
+  "music_player": "เครื่องเล่นเพลง",
+  "settings_audio_cache_cleared_message": "ล้างแคชเสียงแล้ว",
+  "updating_database": "กำลังอัปเดตฐานข้อมูล..."
 }

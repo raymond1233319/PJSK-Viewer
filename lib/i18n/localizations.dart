@@ -214,13 +214,9 @@ class ContentLocalizations {
         await prefs.setString(fullCacheKey, response.body);
         return json.decode(response.body);
       } else {
-        developer.log(
-          'Failed to load $cacheKey from $url: Status ${response.statusCode}',
-        );
         return _loadFromCache(prefs, fullCacheKey, cacheKey, url);
       }
     } catch (e) {
-      developer.log('Error fetching $cacheKey from $url: $e');
       // Try loading from cache on exception
       prefs ??= await SharedPreferences.getInstance();
       return _loadFromCache(prefs, fullCacheKey, cacheKey, url);

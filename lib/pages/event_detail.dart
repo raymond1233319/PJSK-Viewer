@@ -290,7 +290,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
           (e) => e['eventId'] == widget.eventId,
           orElse: () => null,
         )?['musicId'];
-    developer.log(musicId.toString());
 
     // Construct and check audio URL after fetching data
     final audioUrl =

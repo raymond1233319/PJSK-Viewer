@@ -415,35 +415,19 @@ class LiveRankingSelector extends StatefulWidget {
 }
 
 class _LiveRankingSelectorState extends State<LiveRankingSelector> {
-  late Future<List<Map<String, dynamic>>> _ranking;
+  List<Map<String, dynamic>> _ranking = [];
   TextEditingController? _controller;
   Map<String, dynamic>? _matchedEntry;
   int _chapterId = -1;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _ranking = _fetchLiveRanking();
-    _ranking.then((ranking) async {
-      final prefs = await SharedPreferences.getInstance();
-      final int stored = prefs.getInt('live_ranking_rank') ?? 1000;
-      final nearest = ranking.reduce((a, b) {
-        return (((a['rank'] as int) - stored).abs() <
-                ((b['rank'] as int) - stored).abs())
-            ? a
-            : b;
-      });
-      _controller = TextEditingController(text: stored.toString());
-      if (mounted) {
-        setState(() {
-          _controller = _controller;
-          _matchedEntry = nearest;
-        });
-      }
-    });
+    _fetchLiveRanking();
   }
 
-  Future<List<Map<String, dynamic>>> _fetchLiveRanking() async {
+  Future<void> _fetchLiveRanking() async {
     if (widget.eventData?['eventType'] == "world_bloom" &&
         AppGlobals.region == 'jp') {
       final pref = await SharedPreferences.getInstance();
@@ -461,68 +445,92 @@ class _LiveRankingSelectorState extends State<LiveRankingSelector> {
         }
       }
     }
-    return fetchEventRanking(widget.eventData?['id'], _chapterId);
+    _ranking = await fetchEventRanking(widget.eventData?['id'], _chapterId);
+    await _findMatchedEntry();
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _findMatchedEntry({int? desired}) async {
+    final prefs = await SharedPreferences.getInstance();
+    desired ??= prefs.getInt('live_ranking_rank') ?? 1000;
+    final nearest = _ranking.reduce((a, b) {
+      return (((a['rank'] as int) - desired!).abs() <
+              ((b['rank'] as int) - desired).abs())
+          ? a
+          : b;
+    });
+    _controller = TextEditingController(text: nearest['rank'].toString());
+    if (mounted) {
+      setState(() {
+        _controller = _controller;
+        _matchedEntry = nearest;
+      });
+    }
+    await prefs.setInt('live_ranking_rank', nearest['rank']);
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _ranking,
-      builder: (context, snap) {
-        if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snap.hasError) {
-          return SizedBox.shrink();
-        }
-        final ranking = snap.data ?? [];
-        if (ranking.isEmpty) {
-          return const Text('No live ranking data.');
-        }
-        final localizations = ContentLocalizations.of(context);
-        return Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          margin: EdgeInsets.zero,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: IntrinsicHeight(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: IntrinsicHeight(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        localizations!
-                            .translate('common', "eventTracker")
-                            .translated,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      if (_chapterId != -1)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: DetailBuilder.buildSingleCharacterDisplay(
-                            _chapterId,
-                          ),
-                        ),
-                      Spacer(),
-                      IconButton(
-                        icon: const Icon(Icons.refresh),
-                        onPressed: () async {
-                          setState(() {
-                            _ranking = _fetchLiveRanking();
-                          });
-                        },
-                      ),
-                    ],
+                  Text(
+                    AppGlobals.i18n
+                        .translate('common', "eventTracker")
+                        .translated,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
+                  if (_chapterId != -1)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: DetailBuilder.buildSingleCharacterDisplay(
+                        _chapterId,
+                      ),
+                    ),
+                  Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: () async {
+                      setState(() {
+                        _isLoading = true;
+                      });
+                      await _fetchLiveRanking();
+                    },
+                  ),
+                ],
+              ),
 
-                  const Divider(),
+              const Divider(),
 
-                  // Input row with leading '#'
-                  Row(
+              // Input row with leading '#'
+              _isLoading
+                  ? const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                  : _ranking.isEmpty
+                  ? const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Text('No live ranking available'),
+                    ),
+                  )
+                  : Row(
                     children: [
                       const Text('#', style: TextStyle(fontSize: 16)),
                       const SizedBox(width: 4),
@@ -535,25 +543,7 @@ class _LiveRankingSelectorState extends State<LiveRankingSelector> {
                           keyboardType: TextInputType.number,
                           onSubmitted: (val) async {
                             final desired = int.tryParse(val);
-                            if (desired != null) {
-                              final nearest = ranking.reduce((a, b) {
-                                return (((a['rank'] as int) - desired).abs() <
-                                        ((b['rank'] as int) - desired).abs())
-                                    ? a
-                                    : b;
-                              });
-                              setState(() {
-                                _controller?.text =
-                                    (nearest['rank'] as int).toString();
-                                _matchedEntry = nearest;
-                              });
-                              final prefs =
-                                  await SharedPreferences.getInstance();
-                              await prefs.setInt(
-                                'live_ranking_rank',
-                                nearest['rank'] as int,
-                              );
-                            }
+                            await _findMatchedEntry(desired: desired);
                           },
                         ),
                       ),
@@ -567,21 +557,19 @@ class _LiveRankingSelectorState extends State<LiveRankingSelector> {
                     ],
                   ),
 
-                  const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-                  if (_matchedEntry != null) ...[
-                    Text(
-                      "${ContentLocalizations.of(context)?.translate('event', 'realtime').translated}: "
-                      "${formatDate(DateTime.parse(_matchedEntry!['timestamp']).millisecondsSinceEpoch)}",
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ],
-              ),
-            ),
+              if (_matchedEntry != null) ...[
+                Text(
+                  "${ContentLocalizations.of(context)?.translate('event', 'realtime').translated}: "
+                  "${formatDate(DateTime.parse(_matchedEntry!['timestamp']).millisecondsSinceEpoch)}",
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
@@ -851,7 +839,6 @@ class _NewsWidgetState extends State<NewsWidget> {
     } else {
       uri = Uri.tryParse('${AppGlobals.newsUrl}$path');
     }
-    developer.log('Launching URL: $uri');
     if (uri != null) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }

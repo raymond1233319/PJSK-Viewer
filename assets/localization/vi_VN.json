@@ -136,5 +136,7 @@
   "music_shuffle_playlistTab": "Danh sách phát",
   "music_shuffle_allMusicTab": "Tất cả Nhạc",
   "music_shuffle_unknownCredits": "Thông tin không xác định",
-  "music_player": "Trình phát nhạc"
+  "music_player": "Trình phát nhạc",
+  "settings_audio_cache_cleared_message": "Đã xóa bộ nhớ đệm âm thanh",
+  "updating_database": "Đang cập nhật cơ sở dữ liệu..."
 }

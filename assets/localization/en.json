@@ -136,5 +136,7 @@
   "music_shuffle_playlistTab": "Playlist",
   "music_shuffle_allMusicTab": "All Music",
   "music_shuffle_unknownCredits": "Unknown Credits",
-  "music_player": "Music Player"
+  "music_player": "Music Player",
+  "settings_audio_cache_cleared_message": "Audio cache cleared",
+  "updating_database": "Updating database..."
 }

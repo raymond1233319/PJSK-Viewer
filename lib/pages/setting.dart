@@ -8,7 +8,6 @@ import 'package:pjsk_viewer/utils/helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart' show Phoenix;
 import 'package:pjsk_viewer/utils/database/database.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -207,7 +206,9 @@ class _SettingsPageState extends State<SettingsPage> {
           // Region selection
           ExpansionTile(
             title: Text(
-              AppGlobals.i18n.translate('common', 'serverRegionSelect').translated,
+              AppGlobals.i18n
+                  .translate('common', 'serverRegionSelect')
+                  .translated,
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             initiallyExpanded: _pending.containsKey('region'),
@@ -215,8 +216,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 supportedRegions.map((region) {
                   return RadioListTile<String>(
                     title: Text(
-                      i18n
-                          !.translate('common', 'serverRegion', innerKey: region)
+                      i18n!
+                          .translate('common', 'serverRegion', innerKey: region)
                           .translated,
                     ),
                     value: region,
@@ -252,11 +253,12 @@ class _SettingsPageState extends State<SettingsPage> {
           // Data management section
           ExpansionTile(
             title: Text(
-             AppGlobals.i18n.translate('app', 'settings_data_management').translated,
+              AppGlobals.i18n
+                  .translate('app', 'settings_data_management')
+                  .translated,
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             children: [
-              // Add to your settings page
               ListTile(
                 leading: const Icon(Icons.delete),
                 title: Text(
@@ -267,6 +269,11 @@ class _SettingsPageState extends State<SettingsPage> {
                   imageCache.clear();
                   imageCache.clearLiveImages();
                   if (mounted) {
+                    final imageCacheSize =
+                        await PJSKImageCacheManager.calculateImageCacheSize();
+                    setState(() {
+                      _imageCacheSize = formatSize(imageCacheSize);
+                    });
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
@@ -290,6 +297,11 @@ class _SettingsPageState extends State<SettingsPage> {
                 onTap: () async {
                   await clearAudioCache();
                   if (mounted) {
+                    final audioCacheSize =
+                        await MusicCacheManager.calculateAudioCacheSize();
+                    setState(() {
+                      _audioCacheSize = formatSize(audioCacheSize);
+                    });
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
@@ -306,7 +318,11 @@ class _SettingsPageState extends State<SettingsPage> {
               // Datebase reinitialization
               ListTile(
                 leading: const Icon(Icons.restart_alt),
-                title: Text(AppGlobals.i18n.translate('app', 'settings_reinit_db').translated),
+                title: Text(
+                  AppGlobals.i18n
+                      .translate('app', 'settings_reinit_db')
+                      .translated,
+                ),
                 onTap: () async {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(

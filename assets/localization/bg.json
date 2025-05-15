@@ -136,5 +136,7 @@
   "music_shuffle_playlistTab": "Плейлист",
   "music_shuffle_allMusicTab": "Цялата музика",
   "music_shuffle_unknownCredits": "Неизвестни кредити",
-  "music_player": "Музикален плейър"
+  "music_player": "Музикален плейър",
+  "settings_audio_cache_cleared_message": "Аудио кешът е изчистен",
+  "updating_database": "Актуализиране на базата данни..."
 }

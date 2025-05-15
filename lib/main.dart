@@ -7,6 +7,7 @@ import 'package:pjsk_viewer/i18n/app_localizations.dart';
 import 'package:pjsk_viewer/pages/event_detail.dart';
 import 'package:pjsk_viewer/pages/home.dart';
 import 'package:pjsk_viewer/pages/music_detail.dart';
+import 'package:pjsk_viewer/utils/cache_manager.dart';
 import 'package:pjsk_viewer/utils/database/database.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:pjsk_viewer/utils/helper.dart';
@@ -104,10 +105,6 @@ class _AppInitializerState extends State<AppInitializer> {
           AppGlobals.newsUrl = '';
       }
     }
-    developer.log(
-      'AppGlobals: ${AppGlobals.databaseUrl}, ${AppGlobals.assetUrl}, ${AppGlobals.localizationUrl}, ${AppGlobals.apiUrl}, ${AppGlobals.region}',
-      name: 'AppGlobals',
-    );
   }
 
   Future<void> setBackgroundMusic() async {
@@ -115,10 +112,8 @@ class _AppInitializerState extends State<AppInitializer> {
       builder: () => PJSKAudioHandler(),
       config: const AudioServiceConfig(
         androidNotificationChannelId: 'com.pjskviewer.channel.audio',
-        // androidShowNotificationBadge: true, // Optional
-        // androidStopForegroundOnPause: true, // Optional
-        // notificationColor: Colors.blue, // Optional: requires android.R.color.blue
       ),
+      cacheManager: PJSKImageCacheManager.instance,
     );
   }
 
