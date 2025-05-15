@@ -391,7 +391,7 @@ class _MusicPlayerState extends State<MusicPlayer> {
       final id = widget.musicDetails?['id']?.toString() ?? '0000';
       final paddedId = id.padLeft(4, '0');
       final listingUrl = Uri.parse(
-        '${AppGlobals.assetUrl}/?delimiter=%2F&list-type=2&max-keys=500&prefix=live%2F2dmode%2F$mvFolder%2F$paddedId%2F',
+        '${AppGlobals.jpAssetUrl}/?delimiter=%2F&list-type=2&max-keys=500&prefix=live%2F2dmode%2F$mvFolder%2F$paddedId%2F',
       );
       final response = await http.get(listingUrl);
       if (response.statusCode == 200) {
@@ -412,7 +412,7 @@ class _MusicPlayerState extends State<MusicPlayer> {
         }
         if (mp4Key != null) {
           setState(() {
-            _videoUrl = '${AppGlobals.assetUrl}/$mp4Key';
+            _videoUrl = '${AppGlobals.jpAssetUrl}/$mp4Key';
           });
         }
       }
@@ -470,7 +470,7 @@ class _MusicPlayerState extends State<MusicPlayer> {
     for (int i = 0; i < widget.vocals.length; i++) {
       final vocal = widget.vocals[i];
       final bundle = vocal['assetbundleName'] as String;
-      final url = '${AppGlobals.assetUrl}/music/long/$bundle/$bundle.mp3';
+      final url = '${AppGlobals.jpAssetUrl}/music/long/$bundle/$bundle.mp3';
 
       if (await AppGlobals.audioHandler.isCurrentSource(url)) {
         _selectedVocalIndex = i;
@@ -607,7 +607,7 @@ class _MusicPlayerState extends State<MusicPlayer> {
               value: _selectedVocalIndex,
               items:
                   widget.vocals.asMap().entries.map((e) {
-                    final caption = e.value['caption'] as String? ?? '';
+                    final caption = e.value['caption'].toString();
                     final name = MusicDatabase.buildVocalName(
                       context,
                       e.value,

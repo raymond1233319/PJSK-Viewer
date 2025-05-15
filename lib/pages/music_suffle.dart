@@ -1575,7 +1575,7 @@ class _MusicShufflePageState extends State<MusicShufflePage> {
     final vocals = jsonDecode(track['vocals'] ?? '[]');
     final vocal = vocals[vocalIndex];
     final bundle = vocal['assetbundleName'];
-    final url = '${AppGlobals.assetUrl}/music/long/$bundle/$bundle.mp3';
+    final url = '${AppGlobals.jpAssetUrl}/music/long/$bundle/$bundle.mp3';
 
     // Get album art
     final assetbundleName = track['assetbundleName'] ?? '';
