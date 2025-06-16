@@ -1076,7 +1076,9 @@ class DetailBuilder {
     required List<int?> characterIds,
     required List<bool> isSelected,
     required ValueChanged<int> onPressed,
+    String? unit,
   }) {
+    if (unit == 'none') unit = 'piapro';
     return LayoutBuilder(
       builder: (context, constraints) {
         final totalWidth = constraints.maxWidth * 0.95;
@@ -1100,8 +1102,15 @@ class DetailBuilder {
               ),
               children:
                   characterIds.map((id) {
-                    if (id == -1)
-                      return const Icon(Icons.all_inclusive, size: 32);
+                    if (id == -1) {
+                      return Image.asset(
+                        'assets/common/logo_mini/unit_ts_$unit.png',
+                        height: 40,
+                        errorBuilder:
+                            (context, err, stack) =>
+                                const Icon(Icons.broken_image, size: 40),
+                      );
+                    }
                     return buildCharacterIcon(id);
                   }).toList(),
             ),
