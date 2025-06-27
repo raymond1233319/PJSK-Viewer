@@ -211,7 +211,8 @@ class _RankingTableState extends State<RankingTable> {
       orElse: () => <String, dynamic>{},
     );
     final int aggregateAt = currentEvent?['aggregateAt'] as int? ?? 0;
-    if (aggregateAt <= DateTime.now().millisecondsSinceEpoch) {
+    if (aggregateAt <= DateTime.now().millisecondsSinceEpoch ||
+        AppGlobals.region != 'jp') {
       setState(() {
         _isFetchingPredictions = false;
       });
@@ -592,6 +593,21 @@ class _RankingTableState extends State<RankingTable> {
                             spot.x.toInt(),
                           );
                           final score = spot.y.toInt().toString();
+
+                          // Check if this is a prediction line (barDataIndex 1)
+                          
+                          if (spot.barIndex == 1 &&
+                              predictionSpots.isNotEmpty) {
+                            return LineTooltipItem(
+                              '${AppGlobals.i18n.translate('event', 'rankingTable', innerKey: 'prediction').translated}:\n$score P',
+                              const TextStyle(
+                                color: Colors.orange,
+                                fontSize: 12,
+                              ),
+                            );
+                          }
+
+                          // This is the actual data line (barDataIndex 0)
                           // Find the corresponding data point to get the actual username
                           final pointIndex = points.indexWhere(
                             (p) =>
@@ -606,29 +622,38 @@ class _RankingTableState extends State<RankingTable> {
                                   ? points[pointIndex]['userName']
                                   : username;
 
-                          // Calculate points per hour from previous data point
+                          // Calculate points per hour from previous data point or event start
                           String pointsPerHourText = '';
-                          if (pointIndex > 0) {
-                            final prevPoint = points[pointIndex - 1];
-                            final prevScore =
-                                (prevPoint['score'] as num).toDouble();
-                            final prevTime = DateTime.parse(
-                              prevPoint['timestamp'],
-                            );
-                            final currentScore = spot.y;
-                            final currentTime = dt;
+                          if (pointIndex >= 0) {
+                            Map<String, dynamic> prevPoint;
+                            final currentPoint = points[pointIndex];
 
-                            final scoreGain = currentScore - prevScore;
-                            final timeDiffInHours =
-                                currentTime
-                                    .difference(prevTime)
-                                    .inMilliseconds /
-                                (1000 * 60 * 60);
+                            if (pointIndex > 0) {
+                              // Use previous data point
+                              prevPoint = points[pointIndex - 1];
+                            } else {
+                              // For first point, use start time with 0 score
+                              final startTime = _determineStartTime(eventInfo);
+                              if (startTime != null) {
+                                prevPoint = {
+                                  'score': 0,
+                                  'timestamp': startTime.toIso8601String(),
+                                };
+                              } else {
+                                // Skip if no start time available
+                                prevPoint = currentPoint;
+                              }
+                            }
 
-                            if (timeDiffInHours > 0) {
-                              final pointsPerHour =
-                                  (scoreGain / timeDiffInHours).round();
-                              pointsPerHourText = '($pointsPerHour/h)';
+                            final pointsPerHour =
+                                _calculatePointsPerHourBetweenPoints(
+                                  prevPoint,
+                                  currentPoint,
+                                  eventInfo,
+                                );
+                            if (pointsPerHour != null) {
+                              pointsPerHourText =
+                                  '(${pointsPerHour.round()}/h)';
                             }
                           }
 
@@ -745,6 +770,87 @@ class _RankingTableState extends State<RankingTable> {
     }
   }
 
+  /// Determine the appropriate start time for calculations
+  /// Returns the start time based on event type and character selection
+  DateTime? _determineStartTime(Map<String, dynamic>? eventInfo) {
+    if (_characterId != -1) {
+      // For world link chapter rankings, get start time from _worldBlooms
+      final worldBloom = _worldBlooms.firstWhere(
+        (bloom) =>
+            bloom['gameCharacterId'] == _characterId &&
+            bloom['eventId'] == widget.eventId,
+        orElse: () => <String, dynamic>{},
+      );
+      final chapterStartAt = worldBloom['chapterStartAt'] as int?;
+      if (chapterStartAt != null && chapterStartAt > 0) {
+        return DateTime.fromMillisecondsSinceEpoch(chapterStartAt);
+      }
+    } else if (eventInfo != null) {
+      // For regular event rankings, use event start time
+      final startAt = eventInfo['startAt'] as int?;
+      if (startAt != null && startAt > 0) {
+        return DateTime.fromMillisecondsSinceEpoch(startAt);
+      }
+    }
+    return null;
+  }
+
+  /// Determine the appropriate aggregate time for calculations
+  /// Returns the aggregate time based on event type and character selection
+  DateTime? _determineAggregateTime(Map<String, dynamic>? eventInfo) {
+    if (_characterId != -1) {
+      // For world link chapter rankings, get aggregate time from _worldBlooms
+      final worldBloom = _worldBlooms.firstWhere(
+        (bloom) =>
+            bloom['gameCharacterId'] == _characterId &&
+            bloom['eventId'] == widget.eventId,
+        orElse: () => <String, dynamic>{},
+      );
+      final chapterAggregateAt = worldBloom['aggregateAt'] as int?;
+      if (chapterAggregateAt != null && chapterAggregateAt > 0) {
+        return DateTime.fromMillisecondsSinceEpoch(chapterAggregateAt);
+      }
+    } else if (eventInfo != null) {
+      // For regular event rankings, use event aggregate time
+      final aggregateAt = eventInfo['aggregateAt'] as int?;
+      if (aggregateAt != null && aggregateAt > 0) {
+        return DateTime.fromMillisecondsSinceEpoch(aggregateAt);
+      }
+    }
+    return null;
+  }
+
+  /// Calculate points per hour between two data points
+  /// Returns the rate as a double, or null if calculation is not possible
+  /// Uses eventInfo to determine aggregate time and caps secondPoint time if needed
+  double? _calculatePointsPerHourBetweenPoints(
+    Map<String, dynamic> firstPoint,
+    Map<String, dynamic> secondPoint, [
+    Map<String, dynamic>? eventInfo,
+  ]) {
+    final firstScore = (firstPoint['score'] as num).toDouble();
+    final secondScore = (secondPoint['score'] as num).toDouble();
+    final scoreGain = secondScore - firstScore;
+
+    final firstTime = DateTime.parse(firstPoint['timestamp']);
+    DateTime secondTime = DateTime.parse(secondPoint['timestamp']);
+
+    // Determine aggregate time using helper function
+    final aggregateTime = _determineAggregateTime(eventInfo);
+
+    // Use aggregate time if it's available and second point is after aggregate time
+    if (aggregateTime != null && secondTime.isAfter(aggregateTime)) {
+      secondTime = aggregateTime;
+    }
+
+    final timeDiffInHours =
+        secondTime.difference(firstTime).inMilliseconds / (1000 * 60 * 60);
+
+    if (timeDiffInHours <= 0) return null;
+
+    return scoreGain / timeDiffInHours;
+  }
+
   // Helper function to calculate points per hour for different time periods
   String _calculatePointsPerHour(
     List<dynamic> points,
@@ -754,29 +860,24 @@ class _RankingTableState extends State<RankingTable> {
     if (points.isEmpty) return 'N/A';
 
     // Determine reference time: use event aggregate time if available and event has ended, otherwise current time
-    DateTime referenceTime = DateTime.now();
+    final aggregateTime = _determineAggregateTime(eventInfo);
+    DateTime referenceTime = aggregateTime ?? DateTime.now();
 
-    // For world link chapter rankings, get aggregate time from _worldBlooms
-    if (_characterId != -1) {
-      final worldBloom = _worldBlooms.firstWhere(
-        (bloom) =>
-            bloom['gameCharacterId'] == _characterId &&
-            bloom['eventId'] == widget.eventId,
-        orElse: () => <String, dynamic>{},
-      );
-      final chapterAggregateAt = worldBloom['aggregateAt'] as int?;
-      if (chapterAggregateAt != null && chapterAggregateAt > 0) {
-        referenceTime = DateTime.fromMillisecondsSinceEpoch(chapterAggregateAt);
-      }
-    } else if (eventInfo != null) {
-      // For regular event rankings, use event aggregate time if event has ended
-      final aggregateAt = eventInfo['aggregateAt'] as int?;
-      if (aggregateAt != null && aggregateAt > 0) {
-        referenceTime = DateTime.fromMillisecondsSinceEpoch(aggregateAt);
-      }
-    }
     if (referenceTime.isAfter(DateTime.now())) {
       referenceTime = DateTime.now();
+    }
+
+    // Add start point with 0 score
+    List<dynamic> allPoints = List.from(points);
+    if (allPoints.isNotEmpty) {
+      final startTime = _determineStartTime(eventInfo);
+      if (startTime != null) {
+        final startPoint = {
+          'score': 0,
+          'timestamp': startTime.toIso8601String(),
+        };
+        allPoints.insert(0, startPoint);
+      }
     }
 
     List<dynamic> filteredPoints;
@@ -785,19 +886,19 @@ class _RankingTableState extends State<RankingTable> {
       case 'last_24_hours':
         final cutoff = referenceTime.subtract(const Duration(hours: 24));
         filteredPoints =
-            points
+            allPoints
                 .where((p) => DateTime.parse(p['timestamp']).isAfter(cutoff))
                 .toList();
         break;
       case 'last_1_hour':
         final cutoff = referenceTime.subtract(const Duration(hours: 1));
         filteredPoints =
-            points
+            allPoints
                 .where((p) => DateTime.parse(p['timestamp']).isAfter(cutoff))
                 .toList();
         break;
       default: // 'all_time'
-        filteredPoints = points;
+        filteredPoints = allPoints;
         break;
     }
 
@@ -813,20 +914,15 @@ class _RankingTableState extends State<RankingTable> {
     final firstPoint = filteredPoints.first;
     final lastPoint = filteredPoints.last;
 
-    final firstScore = (firstPoint['score'] as num).toDouble();
-    final lastScore = (lastPoint['score'] as num).toDouble();
-    final scoreGain = lastScore - firstScore;
+    // Use the helper function to calculate points per hour with eventInfo
+    final pointsPerHour = _calculatePointsPerHourBetweenPoints(
+      firstPoint,
+      lastPoint,
+      eventInfo,
+    );
 
-    final firstTime = DateTime.parse(firstPoint['timestamp']);
-    final lastTime = DateTime.parse(lastPoint['timestamp']);
-    final timeDiffInHours =
-        lastTime.difference(firstTime).inMilliseconds / (1000 * 60 * 60);
+    if (pointsPerHour == null) return 'N/A';
 
-    if (timeDiffInHours <= 0) return 'N/A';
-
-    final pointsPerHour = scoreGain / timeDiffInHours;
-
-    // Show exact number instead of abbreviated format
     return '${pointsPerHour.round()}';
   }
 
