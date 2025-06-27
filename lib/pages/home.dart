@@ -428,29 +428,43 @@ class _LiveRankingSelectorState extends State<LiveRankingSelector> {
   }
 
   Future<void> _fetchLiveRanking() async {
-    if (widget.eventData?['eventType'] == "world_bloom" &&
-        AppGlobals.region == 'jp') {
-      final pref = await SharedPreferences.getInstance();
-      List<dynamic> worldBlooms = json.decode(
-        pref.getString('worldBlooms') ?? '[]',
-      );
-      for (var bloom in worldBlooms) {
-        final startAt = bloom['chapterStartAt'] as int;
-        final endAt = bloom['chapterEndAt'] as int;
-        final now = DateTime.now().millisecondsSinceEpoch;
+    final prefs = await SharedPreferences.getInstance();
+    final useChapterRanking = prefs.getBool('use_chapter_ranking') ?? true;
 
-        if (now >= startAt && now <= endAt) {
-          _chapterId = bloom['gameCharacterId'] as int;
-          break;
-        }
-      }
+    if (widget.eventData?['eventType'] == "world_bloom" &&
+        AppGlobals.region == 'jp' &&
+        useChapterRanking) {
+      await _loadWorldBloomChapter();
+    } else {
+      // Use overall rankings
+      _chapterId = -1;
     }
+    setState(() {});
+
     _ranking = await fetchEventRanking(widget.eventData?['id'], _chapterId);
     await _findMatchedEntry();
     if (mounted) {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _loadWorldBloomChapter() async {
+    // Find current active chapter
+    final prefs = await SharedPreferences.getInstance();
+    List<dynamic> worldBlooms = json.decode(
+      prefs.getString('worldBlooms') ?? '[]',
+    );
+    for (var bloom in worldBlooms) {
+      final startAt = bloom['chapterStartAt'] as int;
+      final endAt = bloom['chapterEndAt'] as int;
+      final now = DateTime.now().millisecondsSinceEpoch;
+
+      if (now >= startAt && now <= endAt) {
+        _chapterId = bloom['gameCharacterId'] as int;
+        break;
+      }
     }
   }
 
@@ -470,7 +484,6 @@ class _LiveRankingSelectorState extends State<LiveRankingSelector> {
         _matchedEntry = nearest;
       });
     }
-    await prefs.setInt('live_ranking_rank', nearest['rank']);
   }
 
   @override
@@ -501,9 +514,32 @@ class _LiveRankingSelectorState extends State<LiveRankingSelector> {
                       ),
                     ),
                   Spacer(),
+                  // Character/Overall toggle for world bloom events
+                  if (widget.eventData?['eventType'] == "world_bloom")
+                    IconButton(
+                      icon: const Icon(Icons.swap_horiz),
+                      onPressed: () async {
+                        if (_isLoading) return;
+                        setState(() {
+                          _isLoading = true;
+                        });
+
+                        // Toggle the preference
+                        final prefs = await SharedPreferences.getInstance();
+                        final currentValue =
+                            prefs.getBool('use_chapter_ranking') ?? true;
+                        await prefs.setBool(
+                          'use_chapter_ranking',
+                          !currentValue,
+                        );
+
+                        await _fetchLiveRanking();
+                      },
+                    ),
                   IconButton(
                     icon: const Icon(Icons.refresh),
                     onPressed: () async {
+                      if (_isLoading) return;
                       setState(() {
                         _isLoading = true;
                       });
@@ -543,6 +579,11 @@ class _LiveRankingSelectorState extends State<LiveRankingSelector> {
                           keyboardType: TextInputType.number,
                           onSubmitted: (val) async {
                             final desired = int.tryParse(val);
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setInt(
+                              'live_ranking_rank',
+                              desired ?? 1000,
+                            );
                             await _findMatchedEntry(desired: desired);
                           },
                         ),
