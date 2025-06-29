@@ -79,7 +79,6 @@ class MySekaiDatabase {
     try {
       await db.transaction((txn) async {
         var batch = txn.batch();
-        int count = 0;
         for (var raw in fixtureList) {
           if (raw is Map<String, dynamic>) {
             batch.insert('mysekai_fixtures', {
@@ -115,11 +114,9 @@ class MySekaiDatabase {
                   (raw['isGameCharacterAction'] == true) ? 1 : 0,
               'assetbundleName': raw['assetbundleName'] ?? '',
             }, conflictAlgorithm: ConflictAlgorithm.replace);
-            if (++count % 500 == 0) {
-              await batch.commit(noResult: true);
-            }
           }
         }
+        await batch.commit(noResult: true);
       });
 
       await Future.wait([
