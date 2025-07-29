@@ -357,6 +357,14 @@ class _CardIndexPageState extends State<CardIndexPage> {
         ),
       ],
 
+      // sort options
+      sortConfig: SortConfig(
+        sortOptions: [
+          SortOptions(context).idAsc,
+          SortOptions(context).releaseAtAsc,
+        ],
+      ),
+
       pageSize: 10,
       scrollController: _scrollController,
 

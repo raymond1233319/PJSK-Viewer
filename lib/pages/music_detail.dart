@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer' as developer;
 import 'package:audio_service/audio_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';

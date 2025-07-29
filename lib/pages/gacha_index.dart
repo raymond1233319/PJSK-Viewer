@@ -150,6 +150,13 @@ class _GachaIndexPageState extends State<GachaIndexPage> {
               },
             ),
           ],
+          // sort options
+          sortConfig: SortConfig(
+            sortOptions: [
+              SortOptions(context).idAsc,
+              SortOptions(context).startAtAsc,
+            ],
+          ),
           pageSize: 10,
           scrollController: _scrollController,
           itemBuilder: _buildGachaItem,

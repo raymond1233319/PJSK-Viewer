@@ -59,6 +59,12 @@ class _MusicShufflePageState extends State<MusicShufflePage> {
   List<Map<String, String>> _arrangerOptions = [];
   final FocusNode _searchFocusNode = FocusNode();
 
+  // sort
+  SortConfig<Map<String, dynamic>> _sortConfig = SortConfig(
+    sortOptions: [],
+    selectedValue: '',
+  );
+
   @override
   void initState() {
     super.initState();
@@ -309,6 +315,14 @@ class _MusicShufflePageState extends State<MusicShufflePage> {
         },
       ),
     ];
+
+    _sortConfig = SortConfig(
+      sortOptions: [
+        SortOptions(context).idAsc,
+        SortOptions(context).publishedAtAsc,
+      ],
+      selectedValue: SortOptions(context).publishedAtAsc.value,
+    );
   }
 
   /// Apply filters to the music list
@@ -333,6 +347,11 @@ class _MusicShufflePageState extends State<MusicShufflePage> {
           }
           return true;
         }).toList();
+    // Apply sorting
+    final currentFunction = _sortConfig.currentSortFunction;
+    if (currentFunction != null) {
+      filtered.sort(currentFunction);
+    }
     setState(() {
       _lazyLoad.updateFilteredItems(filtered);
       // Scroll back to top
@@ -1287,6 +1306,7 @@ class _MusicShufflePageState extends State<MusicShufflePage> {
                           height: MediaQuery.of(modalContext).size.height * 0.7,
                           child: FilterBottomSheet<Map<String, dynamic>>(
                             filters: _filters,
+                            sortConfig: _sortConfig,
                             onApply: () {
                               applyFilters();
                               Navigator.pop(modalContext);

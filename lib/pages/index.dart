@@ -27,6 +27,108 @@ class FilterConfig<T> {
   });
 }
 
+/// A single sort option with title and function
+class SortOption<T> {
+  final String title;
+  final String value;
+  final int Function(T a, T b) sortFunction;
+
+  SortOption({
+    required this.title,
+    required this.value,
+    required this.sortFunction,
+  });
+}
+
+class SortOptions {
+  late final SortOption<Map<String, dynamic>> idAsc;
+  late final SortOption<Map<String, dynamic>> releaseAtAsc;
+  late final SortOption<Map<String, dynamic>> startAtAsc;
+  late final SortOption<Map<String, dynamic>> publishedAtAsc;
+
+  SortOptions(BuildContext context) {
+    final localizations = ContentLocalizations.of(context)!;
+    idAsc = SortOption(
+      title: localizations.translate('common', 'id').translated,
+      value: "id",
+      sortFunction: createGenericSortFunction("id"),
+    );
+    releaseAtAsc = SortOption(
+      title: localizations.translate('common', 'startAt').translated,
+      value: "releaseAt",
+      sortFunction: createGenericSortFunction("releaseAt"),
+    );
+    startAtAsc = SortOption(
+      title: localizations.translate('common', 'startAt').translated,
+      value: "startAt",
+      sortFunction: createGenericSortFunction("startAt"),
+    );
+    publishedAtAsc = SortOption(
+      title: localizations.translate('common', 'startAt').translated,
+      value: "startAt",
+      sortFunction: createGenericSortFunction("publishedAt"),
+    );
+  }
+}
+
+/// A single sort option configuration with multiple sort functions
+class SortConfig<T> {
+  final List<SortOption<T>> sortOptions;
+  String selectedValue; // currently selected sort option value
+  String selectedOrder; // currently selected order (asc/desc)
+
+  SortConfig({
+    required this.sortOptions,
+    this.selectedValue = "id",
+    this.selectedOrder = "desc",
+  });
+
+  /// Get current sort function based on selected value and order
+  int Function(T a, T b)? get currentSortFunction {
+    final sortOption = sortOptions.firstWhere(
+      (option) => option.value == selectedValue,
+      orElse:
+          () =>
+              sortOptions.isNotEmpty
+                  ? sortOptions.first
+                  : SortOption(title: '', value: '', sortFunction: (a, b) => 0),
+    );
+
+    final baseFunction = sortOption.sortFunction;
+
+    // Apply order
+    final isDesc = selectedOrder == 'desc';
+    return isDesc ? (a, b) => baseFunction(b, a) : baseFunction;
+  }
+}
+
+/// Generic sort function for Map<String, dynamic> entries
+/// Takes the field name as parameter and returns a sort function
+int Function(Map<String, dynamic>, Map<String, dynamic>)
+createGenericSortFunction(String fieldName) {
+  return (Map<String, dynamic> a, Map<String, dynamic> b) {
+    final aValue = a[fieldName];
+    final bValue = b[fieldName];
+
+    // Handle null values
+    if (aValue == null && bValue == null) return 0;
+    if (aValue == null) return -1;
+    if (bValue == null) return 1;
+
+    // Handle different data types
+    if (aValue is int && bValue is int) {
+      return aValue.compareTo(bValue);
+    } else if (aValue is String && bValue is String) {
+      return aValue.compareTo(bValue);
+    } else if (aValue is double && bValue is double) {
+      return aValue.compareTo(bValue);
+    } else {
+      // Fallback to string comparison
+      return aValue.toString().compareTo(bValue.toString());
+    }
+  };
+}
+
 class FilterOptions {
   late final List<Map<String, String>> unitOptions;
   late final List<Map<String, String>> unitOptionsWithoutOther;
@@ -258,19 +360,21 @@ class FilterOptions {
 
 class FilterBottomSheet<T> extends StatelessWidget {
   final List<FilterConfig<T>> filters;
+  final SortConfig<T>? sortConfig;
   final VoidCallback onApply;
 
   const FilterBottomSheet({
     super.key,
     required this.filters,
+    this.sortConfig,
     required this.onApply,
   });
 
   /// Build a single filter option widget
-  Widget _buildOption<T>(
+  Widget _buildOption<U>(
     context,
     Map<String, String> option,
-    FilterConfig<T> filter,
+    FilterConfig<U> filter,
   ) {
     final val = option['value']!;
     final path = option['assetPath'] ?? '';
@@ -319,7 +423,6 @@ class FilterBottomSheet<T> extends StatelessWidget {
     );
   }
 
-  /// Build the filter options
   @override
   Widget build(BuildContext context) {
     final localizations = ContentLocalizations.of(context);
@@ -343,6 +446,100 @@ class FilterBottomSheet<T> extends StatelessWidget {
                 crossAxisAlignment:
                     CrossAxisAlignment.start, // Align headers to the left
                 children: [
+                  // --- Sort Options ---
+                  if (sortConfig != null) ...[
+                    Text(
+                      localizations
+                              ?.translate('filter', 'sort', innerKey: 'caption')
+                              .translated ??
+                          'Sort',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        children: [
+                          // Direction dropdown (Asc/Desc)
+                          Expanded(
+                            flex: 2,
+                            child: DropdownButtonFormField<String>(
+                              value: sortConfig!.selectedOrder,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                filled: true,
+                                fillColor: Colors.white,
+                              ),
+                              items: [
+                                DropdownMenuItem(
+                                  value: 'asc',
+                                  child: Text(
+                                    localizations
+                                            ?.translate(
+                                              'filter',
+                                              'sort',
+                                              innerKey: 'ascending',
+                                            )
+                                            .translated ??
+                                        'Asc',
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'desc',
+                                  child: Text(
+                                    localizations
+                                            ?.translate(
+                                              'filter',
+                                              'sort',
+                                              innerKey: 'descending',
+                                            )
+                                            .translated ??
+                                        'Desc',
+                                  ),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                if (value != null) {
+                                  sortConfig!.selectedOrder = value;
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Sort field dropdown
+                          Expanded(
+                            flex: 2,
+                            child: DropdownButtonFormField<String>(
+                              value: sortConfig!.selectedValue,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                filled: true,
+                                fillColor: Colors.white,
+                              ),
+                              items:
+                                  sortConfig!.sortOptions.map((sortOption) {
+                                    return DropdownMenuItem(
+                                      value: sortOption.value,
+                                      child: Text(sortOption.title),
+                                    );
+                                  }).toList(),
+                              onChanged: (value) {
+                                if (value == null) return;
+                                sortConfig!.selectedValue = value;
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(),
+                  ],
+
+                  // --- Filter Options ---
                   for (var filter in filters) ...[
                     Text(filter.header),
                     const SizedBox(height: 8),
@@ -439,9 +636,16 @@ class FilterBottomSheet<T> extends StatelessWidget {
                 // reset button
                 TextButton(
                   onPressed: () {
-                    // clear all selections
+                    // clear all selections including sort
                     for (var f in filters) {
                       f.selectedValues.clear();
+                    }
+                    // Reset sort to default (ID descending)
+                    if (sortConfig != null &&
+                        sortConfig!.sortOptions.isNotEmpty) {
+                      sortConfig!.selectedValue =
+                          sortConfig!.sortOptions.first.value;
+                      sortConfig!.selectedOrder = 'desc';
                     }
                     // rebuild the sheet
                     (context as Element).markNeedsBuild();
@@ -473,6 +677,7 @@ class FilterBottomSheet<T> extends StatelessWidget {
 /// A generic index page:
 ///  • optional search (via searchPredicate)
 ///  • any number of dropdown filters (via FilterConfig.filterFunc)
+///  • multiple optional sort options (via sortOptions)
 ///  • paginated list via LazyLoadUtility
 class IndexPage<T> extends StatefulWidget {
   final String title;
@@ -486,6 +691,10 @@ class IndexPage<T> extends StatefulWidget {
 
   // zero or more dropdown filters
   final List<FilterConfig<T>> filters;
+
+  // sort configuration
+  final SortConfig<T>? sortConfig;
+
   // pagination
   final int pageSize;
   final int itemsPerRow;
@@ -503,6 +712,7 @@ class IndexPage<T> extends StatefulWidget {
     this.showSearch = false,
     required this.searchPredicate,
     this.filters = const [],
+    this.sortConfig,
     this.pageSize = 10,
     required this.scrollController,
     required this.itemBuilder,
@@ -524,11 +734,8 @@ class _IndexPageState<T> extends State<IndexPage<T>> {
   @override
   void initState() {
     super.initState();
-    final sortedItems = List<T>.from(widget.allItems)..sort((a, b) {
-      final ai = (a as Map<String, dynamic>)['id'] as int;
-      final bi = (b as Map<String, dynamic>)['id'] as int;
-      return ai.compareTo(bi);
-    });
+    final sortedItems = List<T>.from(widget.allItems);
+
     _lazyLoad = LazyLoadUtility<T>(
       pageSize: widget.pageSize,
       scrollController: widget.scrollController,
@@ -541,7 +748,7 @@ class _IndexPageState<T> extends State<IndexPage<T>> {
   }
 
   void applyFilters() {
-    // start from full list
+    // start from full list and apply filters
     var filtered =
         widget.allItems.where((item) {
           // search
@@ -559,6 +766,23 @@ class _IndexPageState<T> extends State<IndexPage<T>> {
           }
           return true;
         }).toList();
+
+    // Apply sorting
+    if (widget.sortConfig != null) {
+      final sortConfig = widget.sortConfig!;
+      // Use currentSortFunction
+      final currentFunction = sortConfig.currentSortFunction;
+      if (currentFunction != null) {
+        filtered.sort(currentFunction);
+      }
+    } else {
+      // Default sort by descending ID
+      filtered.sort((a, b) {
+        final ai = (a as Map<String, dynamic>)['id'] as int;
+        final bi = (b as Map<String, dynamic>)['id'] as int;
+        return bi.compareTo(ai); // Descending order
+      });
+    }
 
     setState(() {
       _lazyLoad.updateFilteredItems(filtered);
@@ -617,7 +841,9 @@ class _IndexPageState<T> extends State<IndexPage<T>> {
         ],
 
         bottom:
-            (widget.showSearch || widget.filters.isNotEmpty)
+            (widget.showSearch ||
+                    widget.filters.isNotEmpty ||
+                    widget.sortConfig != null)
                 ? PreferredSize(
                   preferredSize: const Size.fromHeight(56),
                   child: Padding(
@@ -656,8 +882,9 @@ class _IndexPageState<T> extends State<IndexPage<T>> {
                           const SizedBox(width: 8),
                         ],
 
-                        // filters
-                        if (widget.filters.isNotEmpty)
+                        // filters and sort
+                        if (widget.filters.isNotEmpty ||
+                            widget.sortConfig != null)
                           IconButton(
                             icon: const Icon(Icons.filter_list),
                             onPressed: () {
@@ -673,6 +900,7 @@ class _IndexPageState<T> extends State<IndexPage<T>> {
                                           0.7,
                                       child: FilterBottomSheet<T>(
                                         filters: widget.filters,
+                                        sortConfig: widget.sortConfig,
                                         onApply: () {
                                           applyFilters();
                                           Navigator.pop(modalContext);

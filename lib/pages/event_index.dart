@@ -214,6 +214,13 @@ class _EventPageState extends State<EventPage> {
               },
             ),
           ],
+          // sort options
+          sortConfig: SortConfig(
+            sortOptions: [
+              SortOptions(context).idAsc,
+              SortOptions(context).startAtAsc,
+            ],
+          ),
 
           pageSize: 10,
           scrollController: _scrollController,

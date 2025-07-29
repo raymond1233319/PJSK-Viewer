@@ -287,6 +287,8 @@ class _MySekaiIndexPageState extends State<MySekaiIndexPage> {
               },
             ),
           ],
+          // sort options
+          sortConfig: SortConfig(sortOptions: [SortOptions(context).idAsc]),
           pageSize: 10,
           scrollController: _scrollController,
           itemBuilder: _buildFixtureItem,

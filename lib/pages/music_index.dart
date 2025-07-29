@@ -276,6 +276,14 @@ class _MusicIndexPageState extends State<MusicIndexPage> {
               },
             ),
           ],
+          // sort options
+          sortConfig: SortConfig(
+            sortOptions: [
+              SortOptions(context).idAsc,
+              SortOptions(context).publishedAtAsc,
+            ],
+            selectedValue: SortOptions(context).publishedAtAsc.value,
+          ),
           pageSize: 10,
           scrollController: _scrollController,
           itemBuilder: _buildMusicItem,
