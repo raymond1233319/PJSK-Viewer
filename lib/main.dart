@@ -15,6 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pjsk_viewer/utils/globals.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:pjsk_viewer/utils/audio_handler.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,9 +43,19 @@ class _AppInitializerState extends State<AppInitializer> {
   Future<void> _initAll() async {
     await setLink();
     await _setLocale();
-    await databaseInitialization((msg) {
-      setState(() => _logs.add(msg));
-    });
+    
+    // Check connectivity status
+    final connectivityResult = await Connectivity().checkConnectivity();
+    final isMobileNetwork = connectivityResult.contains(ConnectivityResult.mobile);
+    
+    if (!isMobileNetwork) {
+      await databaseInitialization((msg) {
+        setState(() => _logs.add(msg));
+      });
+    } else {
+      setState(() => _logs.add('Skipping database initialization on mobile network'));
+    }
+    
     await setBackgroundMusic();
     _setupNotificationNavigation();
   }
